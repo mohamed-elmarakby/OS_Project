@@ -341,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                               borderRadius: BorderRadius.circular(10.0),
                             ),
                             onPressed: () {
-                              //draw gant chart
+                              //draw gant chart by choosing scheduler type
                               if (globals.chosenScheduler != '') {
                                 for (var i = 0; i < process.length; i++) {
                                   process.sort(
@@ -594,8 +594,8 @@ class ChartsDemoState extends State<ChartsDemo> {
         } else {
           averageTime += (averageTime + double.parse(process[i].length));
         }
-        averageTime /= (process.length);
       }
+      averageTime = averageTime / process.length;
     } else {
       averageTime = 0;
     }
