@@ -1,6 +1,5 @@
 import 'dart:math';
-// import 'package:fluttertoast/fluttertoast.dart';
-
+import 'package:toast/toast.dart';
 import 'globals.dart' as globals;
 import 'package:flutter/material.dart';
 import 'package:dropdown_formfield/dropdown_formfield.dart';
@@ -153,17 +152,28 @@ class _HomePageState extends State<HomePage> {
                                 child: Text("Add"),
                                 onPressed: () {
                                   setState(() {
-                                    process.add(Proccesses(
-                                      name: name.text,
-                                      length: length.text,
-                                      start: start.text,
-                                      coloring: Color(
-                                              (Random().nextDouble() * 0xFFFFFF)
-                                                      .toInt() <<
-                                                  0)
-                                          .withOpacity(1.0),
-                                    ));
-                                    Navigator.pop(context);
+                                    if (name.text.isNotEmpty &&
+                                        (double.parse(length.text) > 0 &&
+                                            length.text.isNotEmpty) &&
+                                        (start.text.isNotEmpty &&
+                                            double.parse(start.text) >= 0)) {
+                                      process.add(Proccesses(
+                                        name: name.text,
+                                        length: length.text,
+                                        start: start.text,
+                                        coloring: Color((Random().nextDouble() *
+                                                        0xFFFFFF)
+                                                    .toInt() <<
+                                                0)
+                                            .withOpacity(1.0),
+                                      ));
+                                      Navigator.pop(context);
+                                    } else {
+                                      Toast.show(
+                                          "Please Insert Everything", context,
+                                          duration: Toast.LENGTH_SHORT,
+                                          gravity: Toast.BOTTOM);
+                                    }
                                   });
                                 },
                               );
@@ -236,6 +246,63 @@ class _HomePageState extends State<HomePage> {
                             },
                             child: Text(
                               'Add new process',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                process
+                                    .sort((a, b) => a.start.compareTo(b.start));
+                              });
+                            },
+                            child: Text(
+                              'Sort Processes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            color: Colors.red,
+                            onPressed: () {
+                              setState(() {
+                                process.removeLast();
+                              });
+                            },
+                            child: Text(
+                              'Clear Last Process',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            color: Colors.red,
+                            onPressed: () {
+                              setState(() {
+                                process.clear();
+                              });
+                            },
+                            child: Text(
+                              'Clear Processes',
                               style: TextStyle(
                                 fontSize: 16,
                                 wordSpacing: 1.5,
@@ -493,16 +560,34 @@ class ChartsDemoState extends State<ChartsDemo> {
         )
       ]);
     }
-    for (int i = 0; i < process.length; i++) {
-      ganttElements.add(charts.Series<Proccesses, String>(
-        id: '${process[i].name}',
-        domainFn: (Proccesses operation, _) => 'Start',
-        measureFn: (Proccesses operation, _) => int.parse(process[i].length),
-        data: processList[i],
-        labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
-      ));
+    //FCFS
+    if (globals.chosenScheduler == schedularTypes[0]['display']) {
+      for (int i = 0; i < process.length; i++) {
+        ganttElements.add(charts.Series<Proccesses, String>(
+          id: '${process[i].name}',
+          domainFn: (Proccesses operation, _) => 'Start',
+          measureFn: (Proccesses operation, _) =>
+              double.parse(process[i].length),
+          data: processList[i],
+          labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+        ));
+      }
     }
     seriesList = ganttElements;
+  }
+
+  double average() {
+    double averageTime = 0;
+    process.sort((a, b) => a.start.compareTo(b.start));
+    for (var i = 0; i < process.length - 1; i++) {
+      if (i == 0) {
+        averageTime +=
+            (double.parse(process[0].start) + double.parse(process[0].length));
+      } else {
+        averageTime += (averageTime + double.parse(process[i].length));
+      }
+    }
+    return averageTime / (process.length);
   }
 
   @override
@@ -519,6 +604,7 @@ class ChartsDemoState extends State<ChartsDemo> {
                 seriesList.clear();
                 ganttElements.clear();
                 processList.clear();
+                globals.chosenScheduler = '';
                 Navigator.pop(context);
                 Navigator.push(
                   context,
@@ -536,9 +622,17 @@ class ChartsDemoState extends State<ChartsDemo> {
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
-                child: Container(
-                  padding: EdgeInsets.all(20.0),
-                  child: barChart(),
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 1,
+                      child: Text('Average Waiting time= ${average()}'),
+                    ),
+                    Expanded(
+                      flex: 9,
+                      child: barChart(),
+                    )
+                  ],
                 ),
               )),
         ),
