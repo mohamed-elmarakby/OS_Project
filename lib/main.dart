@@ -578,16 +578,21 @@ class ChartsDemoState extends State<ChartsDemo> {
 
   double average() {
     double averageTime = 0;
-    process.sort((a, b) => a.start.compareTo(b.start));
-    for (var i = 0; i < process.length - 1; i++) {
-      if (i == 0) {
-        averageTime +=
-            (double.parse(process[0].start) + double.parse(process[0].length));
-      } else {
-        averageTime += (averageTime + double.parse(process[i].length));
+    if (globals.chosenScheduler == schedularTypes[0]['display']) {
+      process.sort((a, b) => a.start.compareTo(b.start));
+      for (var i = 0; i < process.length - 1; i++) {
+        if (i == 0) {
+          averageTime += (double.parse(process[0].start) +
+              double.parse(process[0].length));
+        } else {
+          averageTime += (averageTime + double.parse(process[i].length));
+        }
+        averageTime /= (process.length);
       }
+    } else {
+      averageTime = 0;
     }
-    return averageTime / (process.length);
+    return averageTime;
   }
 
   @override
