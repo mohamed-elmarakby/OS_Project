@@ -342,30 +342,37 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onPressed: () {
                               //draw gant chart
-                              for (var i = 0; i < process.length; i++) {
-                                process
-                                    .sort((a, b) => a.start.compareTo(b.start));
-                                print(process[i].start);
+                              if (globals.chosenScheduler != '') {
+                                for (var i = 0; i < process.length; i++) {
+                                  process.sort(
+                                      (a, b) => a.start.compareTo(b.start));
+                                  print(process[i].start);
 
-                                // if (int.parse(process[i].start) >
-                                //     highestStart) {
-                                //   highestStart = int.parse(process[i].start);
-                                // }
-                                // if (int.parse(process[i].length) >
-                                //     longestLength) {
-                                //   longestLength = int.parse(process[i].length);
-                                // }
-                                // print(
-                                //     'No. Process: ${process.length}, LL: $longestLength, HS: $highestStart');
-                                // chosenType.length != 0
-                                //     ? print(chosenType)
-                                //     : print('nothing chosen');
+                                  // if (int.parse(process[i].start) >
+                                  //     highestStart) {
+                                  //   highestStart = int.parse(process[i].start);
+                                  // }
+                                  // if (int.parse(process[i].length) >
+                                  //     longestLength) {
+                                  //   longestLength = int.parse(process[i].length);
+                                  // }
+                                  // print(
+                                  //     'No. Process: ${process.length}, LL: $longestLength, HS: $highestStart');
+                                  // chosenType.length != 0
+                                  //     ? print(chosenType)
+                                  //     : print('nothing chosen');
+                                }
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ChartsDemo()),
+                                );
+                              } else {
+                                Toast.show(
+                                    "Please Choose a Scheduler Type", context,
+                                    duration: Toast.LENGTH_SHORT,
+                                    gravity: Toast.BOTTOM);
                               }
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => ChartsDemo()),
-                              );
                             },
                             child: Align(
                               alignment: Alignment.bottomCenter,
