@@ -27,6 +27,7 @@ class HomePage extends StatefulWidget {
 }
 
 List<List<Proccesses>> processList = [];
+
 List<Proccesses> process = [];
 List<Proccesses> sortedByStart = [];
 int highestStart = 0, longestLength = 0;
@@ -87,7 +88,7 @@ class _HomePageState extends State<HomePage> {
                                 Expanded(
                                   flex: 1,
                                   child: Text(
-                                    "LENGTH",
+                                    "Arrival",
                                     style: TextStyle(
                                       fontSize: 16,
                                       wordSpacing: 1.5,
@@ -98,7 +99,7 @@ class _HomePageState extends State<HomePage> {
                                 Expanded(
                                   flex: 1,
                                   child: Text(
-                                    "START",
+                                    "LENGTH",
                                     style: TextStyle(
                                       fontSize: 16,
                                       wordSpacing: 1.5,
@@ -146,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                               TextEditingController name =
                                       TextEditingController(),
                                   length = TextEditingController(),
-                                  start = TextEditingController();
+                                  arrival = TextEditingController();
                               // set up the button
                               Widget addButton = FlatButton(
                                 child: Text("Add"),
@@ -155,12 +156,12 @@ class _HomePageState extends State<HomePage> {
                                     if (name.text.isNotEmpty &&
                                         (double.parse(length.text) > 0 &&
                                             length.text.isNotEmpty) &&
-                                        (start.text.isNotEmpty &&
-                                            double.parse(start.text) >= 0)) {
+                                        (arrival.text.isNotEmpty &&
+                                            double.parse(arrival.text) >= 0)) {
                                       process.add(Proccesses(
                                         name: name.text,
                                         length: length.text,
-                                        start: start.text,
+                                        arrival: arrival.text,
                                         coloring: Color((Random().nextDouble() *
                                                         0xFFFFFF)
                                                     .toInt() <<
@@ -207,10 +208,10 @@ class _HomePageState extends State<HomePage> {
                                     Expanded(
                                       flex: 3,
                                       child: TextField(
-                                        controller: length,
+                                        controller: arrival,
                                         keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
-                                            hintText: "Process Length",
+                                            hintText: "Process Arrival Time",
                                             border: OutlineInputBorder()),
                                       ),
                                     ),
@@ -221,10 +222,10 @@ class _HomePageState extends State<HomePage> {
                                     Expanded(
                                       flex: 3,
                                       child: TextField(
-                                        controller: start,
+                                        controller: length,
                                         keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
-                                            hintText: "Process Start Time",
+                                            hintText: "Process Length",
                                             border: OutlineInputBorder()),
                                       ),
                                     ),
@@ -259,12 +260,31 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onPressed: () {
                               setState(() {
-                                process
-                                    .sort((a, b) => a.start.compareTo(b.start));
+                                process.sort(
+                                    (a, b) => a.length.compareTo(b.length));
                               });
                             },
                             child: Text(
-                              'Sort Processes',
+                              'Sort Processes By Length',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                process.sort(
+                                    (a, b) => a.arrival.compareTo(b.arrival));
+                              });
+                            },
+                            child: Text(
+                              'Sort Processes By Arrival',
                               style: TextStyle(
                                 fontSize: 16,
                                 wordSpacing: 1.5,
@@ -343,25 +363,6 @@ class _HomePageState extends State<HomePage> {
                             onPressed: () {
                               //draw gant chart by choosing scheduler type
                               if (globals.chosenScheduler != '') {
-                                for (var i = 0; i < process.length; i++) {
-                                  process.sort(
-                                      (a, b) => a.start.compareTo(b.start));
-                                  print(process[i].start);
-
-                                  // if (int.parse(process[i].start) >
-                                  //     highestStart) {
-                                  //   highestStart = int.parse(process[i].start);
-                                  // }
-                                  // if (int.parse(process[i].length) >
-                                  //     longestLength) {
-                                  //   longestLength = int.parse(process[i].length);
-                                  // }
-                                  // print(
-                                  //     'No. Process: ${process.length}, LL: $longestLength, HS: $highestStart');
-                                  // chosenType.length != 0
-                                  //     ? print(chosenType)
-                                  //     : print('nothing chosen');
-                                }
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -423,9 +424,9 @@ List schedularTypes = [
 ];
 
 class Proccesses extends StatelessWidget {
-  final String name, length, start;
+  final String name, length, arrival;
   final Color coloring;
-  Proccesses({this.name, this.start, this.length, this.coloring});
+  Proccesses({this.name, this.arrival, this.length, this.coloring});
   final TextStyle words = TextStyle(fontSize: 14.0);
   @override
   Widget build(BuildContext context) {
@@ -440,8 +441,8 @@ class Proccesses extends StatelessWidget {
               style: words,
             ),
           ),
+          Expanded(flex: 1, child: Text("${this.arrival}", style: words)),
           Expanded(flex: 1, child: Text("${this.length}", style: words)),
-          Expanded(flex: 1, child: Text("${this.start}", style: words)),
         ],
       ),
     );
@@ -507,6 +508,8 @@ class ChartsDemo extends StatefulWidget {
   ChartsDemoState createState() => ChartsDemoState();
 }
 
+List<double> start = [];
+
 class ChartsDemoState extends State<ChartsDemo> {
   //
   List<charts.Series> seriesList;
@@ -556,19 +559,111 @@ class ChartsDemoState extends State<ChartsDemo> {
   @override
   void initState() {
     super.initState();
-    for (int i = 0; i < process.length; i++) {
-      print('${process[i].name}, ${process[i].length}, ${process[i].start}');
-      processList.add([
-        Proccesses(
-          name: process[i].name,
-          length: process[i].length,
-          start: process[i].start,
-          coloring: process[i].coloring,
-        )
-      ]);
-    }
     //FCFS
+    //adding Dummy Chart
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
+      process.sort((a, b) => a.arrival.compareTo(b.arrival));
+      for (int i = 0; i < process.length - 1; i++) {
+        if (double.parse(process[0].arrival) != 0) {
+          process.insert(
+              0,
+              Proccesses(
+                name: 'Dummy',
+                length: process[i].arrival,
+                arrival: '0',
+                coloring: Color((Random().nextDouble() * 0xFFFFFF).toInt() << 0)
+                    .withOpacity(1.0),
+              ));
+        } else {
+          if (double.parse(process[i + 1].arrival) >
+              (double.parse(process[i].arrival) +
+                  double.parse(process[i].length))) {
+            double dummyIndex = double.parse(process[i + 1].arrival) -
+                (double.parse(process[i].arrival) +
+                    double.parse(process[i].length));
+
+            setState(() {
+              process.insert(
+                  i + 1,
+                  Proccesses(
+                    name: 'Dummy',
+                    length: dummyIndex.toString(),
+                    arrival: (double.parse(process[i].arrival) +
+                            double.parse(process[i].length))
+                        .toString(),
+                    coloring:
+                        Color((Random().nextDouble() * 0xFFFFFF).toInt() << 0)
+                            .withOpacity(1.0),
+                  ));
+            });
+          }
+        }
+      }
+      for (int i = 0; i < process.length; i++) {
+        if (process.length != 1) {
+          print(
+              '${process[i].name}, ${process[i].length}, ${process[i].arrival}');
+          processList.add([
+            Proccesses(
+              name: process[i].name,
+              length: process[i].length,
+              arrival: process[i].arrival,
+              coloring: process[i].coloring,
+            )
+          ]);
+        } else {
+          if (process[0].arrival == "0") {
+            processList.add([
+              Proccesses(
+                name: process[i].name,
+                length: process[i].length,
+                arrival: process[i].arrival,
+                coloring: process[i].coloring,
+              )
+            ]);
+          } else {
+            process.insert(
+                0,
+                Proccesses(
+                  name: 'Dummy',
+                  length: process[0].arrival,
+                  arrival: '0',
+                  coloring: process[0].coloring,
+                ));
+            for (int i = 0; i < process.length; i++) {
+              processList.add([process[i]]);
+            }
+          }
+        }
+      }
+      for (int i = 0; i < process.length; i++) {
+        if (processList[i][0].name == "Dummy") {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            colorFn: (Proccesses operation, _) =>
+                charts.ColorUtil.fromDartColor(Colors.black),
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        } else {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        }
+      }
+    }
+    //SJF
+    if (globals.chosenScheduler == schedularTypes[1]['display']) {
+      process.sort((a, b) => a.arrival.compareTo(b.arrival));
+      process.sort((a, b) => a.length.compareTo(b.length));
       for (int i = 0; i < process.length; i++) {
         ganttElements.add(charts.Series<Proccesses, String>(
           id: '${process[i].name}',
@@ -583,23 +678,31 @@ class ChartsDemoState extends State<ChartsDemo> {
     seriesList = ganttElements;
   }
 
+  double startDouble = 0, length = 0, waitingTime = 0;
+
   double average() {
-    double averageTime = 0;
+    double numberOfProcesses = 0;
+
+    //FCFS average time calculation
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
-      process.sort((a, b) => a.start.compareTo(b.start));
-      for (var i = 0; i < process.length - 1; i++) {
-        if (i == 0) {
-          averageTime += (double.parse(process[0].start) +
-              double.parse(process[0].length));
-        } else {
-          averageTime += (averageTime + double.parse(process[i].length));
-        }
+      process.sort((a, b) => a.arrival.compareTo(b.arrival));
+      start.add(double.parse(process[0].arrival)); //start=0
+
+      for (int i = 1; i < process.length; i++) {
+        startDouble += double.parse(process[i - 1].length);
+        start.add(startDouble);
       }
-      averageTime = averageTime / process.length;
-    } else {
-      averageTime = 0;
+
+      for (int i = 0; i < process.length; i++) {
+        waitingTime += start[i] - double.parse(process[i].arrival);
+      }
     }
-    return averageTime;
+    for (int i = 0; i < process.length; i++) {
+      if (process[i].name != "Dummy") {
+        numberOfProcesses++;
+      }
+    }
+    return waitingTime / numberOfProcesses;
   }
 
   @override
@@ -616,6 +719,9 @@ class ChartsDemoState extends State<ChartsDemo> {
                 seriesList.clear();
                 ganttElements.clear();
                 processList.clear();
+                start.clear();
+                processList.clear();
+                ganttElements.clear();
                 globals.chosenScheduler = '';
                 Navigator.pop(context);
                 Navigator.push(
@@ -638,7 +744,7 @@ class ChartsDemoState extends State<ChartsDemo> {
                   children: <Widget>[
                     Expanded(
                       flex: 1,
-                      child: Text('Average Waiting time= ${average()}'),
+                      child: Text('Average Waiting time= ${average()} ms'),
                     ),
                     Expanded(
                       flex: 9,
