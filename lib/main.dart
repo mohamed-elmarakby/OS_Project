@@ -4,6 +4,7 @@ import 'globals.dart' as globals;
 import 'package:flutter/material.dart';
 import 'package:dropdown_formfield/dropdown_formfield.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -12,6 +13,10 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'OS Project',
@@ -107,6 +112,17 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                 ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    "Priority",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      wordSpacing: 1.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -135,7 +151,7 @@ class _HomePageState extends State<HomePage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24.0, vertical: 16),
-                      child: Column(
+                      child: ListView(
                         children: <Widget>[
                           RaisedButton(
                             shape: RoundedRectangleBorder(
@@ -147,7 +163,8 @@ class _HomePageState extends State<HomePage> {
                               TextEditingController name =
                                       TextEditingController(),
                                   length = TextEditingController(),
-                                  arrival = TextEditingController();
+                                  arrival = TextEditingController(),
+                                  priority = TextEditingController();
                               // set up the button
                               Widget addButton = FlatButton(
                                 child: Text("Add"),
@@ -157,11 +174,14 @@ class _HomePageState extends State<HomePage> {
                                         (double.parse(length.text) > 0 &&
                                             length.text.isNotEmpty) &&
                                         (arrival.text.isNotEmpty &&
-                                            double.parse(arrival.text) >= 0)) {
+                                            double.parse(arrival.text) >= 0) &&
+                                        (priority.text.isNotEmpty &&
+                                            double.parse(priority.text) >= 0)) {
                                       process.add(Proccesses(
                                         name: name.text,
                                         length: length.text,
                                         arrival: arrival.text,
+                                        priority: priority.text,
                                         coloring: Color((Random().nextDouble() *
                                                         0xFFFFFF)
                                                     .toInt() <<
@@ -197,6 +217,7 @@ class _HomePageState extends State<HomePage> {
                                         keyboardType: TextInputType.text,
                                         autofocus: true,
                                         decoration: InputDecoration(
+                                            labelText: "Process Name",
                                             hintText: "Process Name",
                                             border: OutlineInputBorder()),
                                       ),
@@ -211,6 +232,7 @@ class _HomePageState extends State<HomePage> {
                                         controller: arrival,
                                         keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
+                                            labelText: "Process Arrival Time",
                                             hintText: "Process Arrival Time",
                                             border: OutlineInputBorder()),
                                       ),
@@ -225,7 +247,23 @@ class _HomePageState extends State<HomePage> {
                                         controller: length,
                                         keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
+                                            labelText: "Process Length",
                                             hintText: "Process Length",
+                                            border: OutlineInputBorder()),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: SizedBox(),
+                                      flex: 1,
+                                    ),
+                                    Expanded(
+                                      flex: 3,
+                                      child: TextField(
+                                        controller: priority,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                            labelText: "Process Priority",
+                                            hintText: "Process Priority",
                                             border: OutlineInputBorder()),
                                       ),
                                     ),
@@ -260,8 +298,27 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onPressed: () {
                               setState(() {
-                                process.sort(
-                                    (a, b) => a.length.compareTo(b.length));
+                                process
+                                    .sort((a, b) => a.name.compareTo(b.name));
+                              });
+                            },
+                            child: Text(
+                              'Sort Processes By Name',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                process.sort((a, b) => (double.parse(a.length))
+                                    .compareTo(double.parse(b.length)));
                               });
                             },
                             child: Text(
@@ -279,12 +336,32 @@ class _HomePageState extends State<HomePage> {
                             ),
                             onPressed: () {
                               setState(() {
-                                process.sort(
-                                    (a, b) => a.arrival.compareTo(b.arrival));
+                                process.sort((a, b) => (double.parse(a.arrival))
+                                    .compareTo(double.parse(b.arrival)));
                               });
                             },
                             child: Text(
                               'Sort Processes By Arrival',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                process.sort((a, b) =>
+                                    (double.parse(a.priority))
+                                        .compareTo(double.parse(b.priority)));
+                              });
+                            },
+                            child: Text(
+                              'Sort Processes By Priority',
                               style: TextStyle(
                                 fontSize: 16,
                                 wordSpacing: 1.5,
@@ -329,9 +406,6 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: SizedBox(),
                           ),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
@@ -388,8 +462,6 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ],
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       ),
                     ),
                   ),
@@ -424,9 +496,10 @@ List schedularTypes = [
 ];
 
 class Proccesses extends StatelessWidget {
-  final String name, length, arrival;
+  final String name, length, arrival, priority;
   final Color coloring;
-  Proccesses({this.name, this.arrival, this.length, this.coloring});
+  Proccesses(
+      {this.name, this.arrival, this.length, this.coloring, this.priority});
   final TextStyle words = TextStyle(fontSize: 14.0);
   @override
   Widget build(BuildContext context) {
@@ -443,6 +516,7 @@ class Proccesses extends StatelessWidget {
           ),
           Expanded(flex: 1, child: Text("${this.arrival}", style: words)),
           Expanded(flex: 1, child: Text("${this.length}", style: words)),
+          Expanded(flex: 1, child: Text("${this.priority}", style: words)),
         ],
       ),
     );
@@ -562,7 +636,8 @@ class ChartsDemoState extends State<ChartsDemo> {
     //FCFS
     //adding Dummy Chart
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
-      process.sort((a, b) => a.arrival.compareTo(b.arrival));
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
       for (int i = 0; i < process.length - 1; i++) {
         if (double.parse(process[0].arrival) != 0) {
           process.insert(
@@ -571,6 +646,7 @@ class ChartsDemoState extends State<ChartsDemo> {
                 name: 'Dummy',
                 length: process[i].arrival,
                 arrival: '0',
+                priority: '0',
                 coloring: Color((Random().nextDouble() * 0xFFFFFF).toInt() << 0)
                     .withOpacity(1.0),
               ));
@@ -587,6 +663,7 @@ class ChartsDemoState extends State<ChartsDemo> {
                   i + 1,
                   Proccesses(
                     name: 'Dummy',
+                    priority: '0',
                     length: dummyIndex.toString(),
                     arrival: (double.parse(process[i].arrival) +
                             double.parse(process[i].length))
@@ -608,6 +685,7 @@ class ChartsDemoState extends State<ChartsDemo> {
               name: process[i].name,
               length: process[i].length,
               arrival: process[i].arrival,
+              priority: process[i].priority,
               coloring: process[i].coloring,
             )
           ]);
@@ -617,6 +695,7 @@ class ChartsDemoState extends State<ChartsDemo> {
               Proccesses(
                 name: process[i].name,
                 length: process[i].length,
+                priority: process[i].priority,
                 arrival: process[i].arrival,
                 coloring: process[i].coloring,
               )
@@ -629,6 +708,8 @@ class ChartsDemoState extends State<ChartsDemo> {
                   length: process[0].arrival,
                   arrival: '0',
                   coloring: process[0].coloring,
+                  //dummy priority
+                  priority: '0',
                 ));
             for (int i = 0; i < process.length; i++) {
               processList.add([process[i]]);
@@ -662,18 +743,21 @@ class ChartsDemoState extends State<ChartsDemo> {
     }
     //SJF
     if (globals.chosenScheduler == schedularTypes[1]['display']) {
-      process.sort((a, b) => a.arrival.compareTo(b.arrival));
-      process.sort((a, b) => a.length.compareTo(b.length));
-      for (int i = 0; i < process.length; i++) {
-        ganttElements.add(charts.Series<Proccesses, String>(
-          id: '${process[i].name}',
-          domainFn: (Proccesses operation, _) => 'Start',
-          measureFn: (Proccesses operation, _) =>
-              double.parse(process[i].length),
-          data: processList[i],
-          labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
-        ));
-      }
+      // process.sort((a, b) => a.arrival.compareTo(b.arrival));
+      // process.sort((a, b) => a.length.compareTo(b.length));
+      // for (int i = 0; i < process.length; i++) {
+      //   processList.add([process[i]]);
+      // }
+      // for (int i = 0; i < process.length; i++) {
+      //   ganttElements.add(charts.Series<Proccesses, String>(
+      //     id: '${process[i].name}',
+      //     domainFn: (Proccesses operation, _) => 'Start',
+      //     measureFn: (Proccesses operation, _) =>
+      //         double.parse(process[i].length),
+      //     data: processList[i],
+      //     labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+      //   ));
+      // }
     }
     seriesList = ganttElements;
   }
@@ -685,7 +769,8 @@ class ChartsDemoState extends State<ChartsDemo> {
 
     //FCFS average time calculation
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
-      process.sort((a, b) => a.arrival.compareTo(b.arrival));
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
       start.add(double.parse(process[0].arrival)); //start=0
 
       for (int i = 1; i < process.length; i++) {
@@ -701,6 +786,10 @@ class ChartsDemoState extends State<ChartsDemo> {
       if (process[i].name != "Dummy") {
         numberOfProcesses++;
       }
+    }
+    for (int i = 0; i < process.length; i++) {
+      print(
+          'Name: ${process[i].name}, Arrival: ${process[i].arrival}, Length: ${process[i].length}, Priority: ${process[i].priority}\n');
     }
     return waitingTime / numberOfProcesses;
   }
