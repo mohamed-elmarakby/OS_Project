@@ -34,7 +34,6 @@ class HomePage extends StatefulWidget {
 List<List<Proccesses>> processList = [];
 
 List<Proccesses> process = [];
-List<Proccesses> sortedByStart = [];
 int highestStart = 0, longestLength = 0;
 
 class _HomePageState extends State<HomePage> {
@@ -482,12 +481,20 @@ List schedularTypes = [
     "value": "FCFS",
   },
   {
-    "display": "SJF",
-    "value": "SJF",
+    "display": "SJF Non Premative",
+    "value": "SJF Non Premative",
   },
   {
-    "display": "Priority",
-    "value": "Priority",
+    "display": "SJF Premative",
+    "value": "SJF Premative",
+  },
+  {
+    "display": "Priority Non Premative",
+    "value": "SJF Premative",
+  },
+  {
+    "display": "Priority Premative",
+    "value": "SJF Premative",
   },
   {
     "display": "Round Robin",
@@ -497,9 +504,15 @@ List schedularTypes = [
 
 class Proccesses extends StatelessWidget {
   final String name, length, arrival, priority;
+  String start;
   final Color coloring;
   Proccesses(
-      {this.name, this.arrival, this.length, this.coloring, this.priority});
+      {this.name,
+      this.arrival,
+      this.length,
+      this.coloring,
+      this.priority,
+      this.start = '0'});
   final TextStyle words = TextStyle(fontSize: 14.0);
   @override
   Widget build(BuildContext context) {
@@ -587,7 +600,7 @@ List<double> start = [];
 class ChartsDemoState extends State<ChartsDemo> {
   //
   List<charts.Series> seriesList;
-
+  List<Proccesses> temp = [];
   static List<charts.Series<Proccesses, String>> ganttElements = [];
 
   barChart() {
@@ -636,6 +649,174 @@ class ChartsDemoState extends State<ChartsDemo> {
     //FCFS
     //adding Dummy Chart
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
+      //sorting for first ararival
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
+      //adding dummy activities
+      for (int i = 0; i < process.length - 1; i++) {
+        if (double.parse(process[0].arrival) != 0) {
+          process.insert(
+              0,
+              Proccesses(
+                arrival: '0',
+                length: process[0].arrival,
+                name: 'Dummy',
+                start: '0',
+                priority: '0',
+              ));
+        }
+      }
+      //getting real start time
+      double startDouble = 0;
+      start.add(double.parse(process[0].arrival)); //start=0
+      for (int i = 1; i < process.length; i++) {
+        startDouble += double.parse(process[i - 1].length);
+        start.add(startDouble); //array start
+      }
+      ///////////////////////////////////////////////////////////
+      ///add dummy
+      for (int i = 0; i < process.length; i++) {
+        if (start[i] < double.parse(process[i].arrival)) {
+          if (process[i].arrival != process[i - 1].arrival) {
+            double newStart =
+                (start[i - 1] + double.parse(process[i - 1].length));
+            start.insert(i, newStart);
+            process.insert(
+                i,
+                Proccesses(
+                  arrival: newStart.toString(),
+                  start: newStart.toString(),
+                  name: "Dummy",
+                  length:
+                      (double.parse(process[i].arrival) - newStart).toString(),
+                  priority: '0',
+                ));
+            start[i + 1] = double.parse(process[i].arrival) +
+                double.parse(process[i].length);
+            process[i + 1].start = (double.parse(process[i].arrival) +
+                    double.parse(process[i].length))
+                .toString();
+          } else {
+            start[i] = ((start[i - 1]) + double.parse(process[i - 1].length));
+            process[i].start =
+                (((start[i - 1]) + double.parse(process[i - 1].length)))
+                    .toString();
+          }
+        }
+      }
+      for (var i = 0; i < process.length; i++) {
+        processList.add([process[i]]);
+      }
+      for (var i = 0; i < processList.length; i++) {
+        print(
+            "name: ${processList[i][0].name}, arrival: ${start[i]}, length: ${processList[i][0].length}");
+      }
+      for (int i = 0; i < process.length; i++) {
+        if (processList[i][0].name == "Dummy") {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            colorFn: (Proccesses operation, _) =>
+                charts.ColorUtil.fromDartColor(Colors.black),
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        } else {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        }
+      }
+    }
+    //SJF Non Premative
+    //SJF Premative
+    //Priority
+    //Round Robin
+    seriesList = ganttElements;
+  }
+
+  //calculation of average time
+  double average() {
+    double numberOfProcesses = 0;
+    double waitingTime = 0;
+    //FCFS average time calculation
+    if (globals.chosenScheduler == schedularTypes[0]['display']) {
+      for (int i = 0; i < process.length; i++) {
+        if (process[i].name != "Dummy") {
+          numberOfProcesses++;
+        }
+        if (start[i] > double.parse(process[i].arrival)) {
+          waitingTime += (start[i] - double.parse(process[i].arrival));
+        }
+      }
+    }
+    return waitingTime / numberOfProcesses;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () {
+                seriesList.clear();
+                ganttElements.clear();
+                processList.clear();
+                start.clear();
+                processList.clear();
+                ganttElements.clear();
+                temp.clear();
+                globals.chosenScheduler = '';
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
+                );
+              }),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              elevation: 20,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 1,
+                      child: Text('Average Waiting time= ${average()} ms'),
+                    ),
+                    Expanded(
+                      flex: 9,
+                      child: barChart(),
+                    )
+                  ],
+                ),
+              )),
+        ),
+      ),
+    );
+  }
+}
+
+/*
+if (globals.chosenScheduler == schedularTypes[0]['display']) {
       process.sort((a, b) =>
           (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
       for (int i = 0; i < process.length - 1; i++) {
@@ -657,7 +838,8 @@ class ChartsDemoState extends State<ChartsDemo> {
             double dummyIndex = double.parse(process[i + 1].arrival) -
                 (double.parse(process[i].arrival) +
                     double.parse(process[i].length));
-
+            startDouble = double.parse(process[i].arrival);
+            startDouble += double.parse(process[i - 1].length);
             setState(() {
               process.insert(
                   i + 1,
@@ -665,9 +847,7 @@ class ChartsDemoState extends State<ChartsDemo> {
                     name: 'Dummy',
                     priority: '0',
                     length: dummyIndex.toString(),
-                    arrival: (double.parse(process[i].arrival) +
-                            double.parse(process[i].length))
-                        .toString(),
+                    arrival: startDouble.toString(),
                     coloring:
                         Color((Random().nextDouble() * 0xFFFFFF).toInt() << 0)
                             .withOpacity(1.0),
@@ -743,21 +923,149 @@ class ChartsDemoState extends State<ChartsDemo> {
     }
     //SJF
     if (globals.chosenScheduler == schedularTypes[1]['display']) {
-      // process.sort((a, b) => a.arrival.compareTo(b.arrival));
-      // process.sort((a, b) => a.length.compareTo(b.length));
-      // for (int i = 0; i < process.length; i++) {
-      //   processList.add([process[i]]);
-      // }
-      // for (int i = 0; i < process.length; i++) {
-      //   ganttElements.add(charts.Series<Proccesses, String>(
-      //     id: '${process[i].name}',
-      //     domainFn: (Proccesses operation, _) => 'Start',
-      //     measureFn: (Proccesses operation, _) =>
-      //         double.parse(process[i].length),
-      //     data: processList[i],
-      //     labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
-      //   ));
-      // }
+      //ordering the inputs with respect to arrival and length===\\
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
+      for (var i = 0; i < process.length; i++) {
+        for (var j = 0; j < process.length; j++) {
+          if ((double.parse(process[i].length) <
+                  double.parse(process[j].length)) &&
+              (double.parse(process[i].arrival) ==
+                  double.parse(process[j].arrival))) {
+            temp.insert(0, process[i]);
+            process[i] = process[j];
+            process[j] = temp[0];
+          }
+        }
+        //=========================================================\\
+      }
+
+      for (int i = 0; i < process.length - 1; i++) {
+        if (double.parse(process[0].arrival) != 0) {
+          process.insert(
+              0,
+              Proccesses(
+                name: 'Dummy',
+                length: process[i].arrival,
+                arrival: '0',
+                priority: '0',
+                coloring: Color((Random().nextDouble() * 0xFFFFFF).toInt() << 0)
+                    .withOpacity(1.0),
+              ));
+        } else {
+          if (double.parse(process[i + 1].arrival) >
+              (double.parse(process[i].arrival) +
+                  double.parse(process[i].length))) {
+            double dummyIndex = double.parse(process[i + 1].arrival) -
+                (double.parse(process[i].arrival) +
+                    double.parse(process[i].length));
+
+            setState(() {
+              process.insert(
+                  i + 1,
+                  Proccesses(
+                    name: 'Dummy',
+                    priority: '0',
+                    length: dummyIndex.toString(),
+                    arrival: (double.parse(process[i].arrival) +
+                            double.parse(process[i].length))
+                        .toString(),
+                    coloring:
+                        Color((Random().nextDouble() * 0xFFFFFF).toInt() << 0)
+                            .withOpacity(1.0),
+                  ));
+            });
+          }
+        }
+      }
+      //============================================================================\\
+      start.add(double.parse(process[0].arrival));
+      for (int i = 1; i < process.length; i++) {
+        if (process[i].name=="Dummy") {
+           startDouble = double.parse(process[i-1].length)+start[i-1];
+        }
+        else{
+          startDouble += double.parse(process[i - 1].length);
+        }
+        start.add(startDouble);
+      }
+      for (int i = 0; i < process.length; i++) {
+        if (process.length != 1) {
+          if (process[i].name=="Dummy") {
+             processList.add([
+            Proccesses(
+              name: process[i].name,
+              arrival: i==0? process[i].arrival:(start[i-1]+double.parse(process[i-1].length)).toString(),
+              length: i==0?process[i].length:start[i].toString(),
+              priority: process[i].priority,
+              coloring: process[i].coloring,
+            )
+          ]);
+          }else{
+             processList.add([
+            Proccesses(
+              name: process[i].name,
+              length: process[i].length,
+              arrival: start[i].toString(),
+              priority: process[i].priority,
+              coloring: process[i].coloring,
+            )
+          ]);
+          }
+          print(
+              '${processList[i][0].name}, ${processList[i][0].arrival}, ${processList[i][0].length}');
+        } else {
+          if (process[0].arrival == "0") {
+            processList.add([
+              Proccesses(
+                name: process[i].name,
+                length: process[i].length,
+                priority: process[i].priority,
+                arrival: process[i].arrival,
+                coloring: process[i].coloring,
+              )
+            ]);
+          } else {
+            process.insert(
+                0,
+                Proccesses(
+                  name: 'Dummy',
+                  length: process[0].arrival,
+                  arrival: '0',
+                  coloring: process[0].coloring,
+                  //dummy priority
+                  priority: '0',
+                ));
+            for (int i = 0; i < process.length; i++) {
+              processList.add([process[i]]);
+            }
+          }
+        }
+      }
+      //====================================================================\\
+      for (int i = 0; i < process.length; i++) {
+        if (processList[i][0].name == "Dummy") {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            colorFn: (Proccesses operation, _) =>
+                charts.ColorUtil.fromDartColor(Colors.black),
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        } else {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        }
+      }
     }
     seriesList = ganttElements;
   }
@@ -768,7 +1076,8 @@ class ChartsDemoState extends State<ChartsDemo> {
     double numberOfProcesses = 0;
 
     //FCFS average time calculation
-    if (globals.chosenScheduler == schedularTypes[0]['display']) {
+    if (globals.chosenScheduler == schedularTypes[0]['display'] ||
+        globals.chosenScheduler == schedularTypes[1]['display']) {
       process.sort((a, b) =>
           (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
       start.add(double.parse(process[0].arrival)); //start=0
@@ -792,58 +1101,4 @@ class ChartsDemoState extends State<ChartsDemo> {
           'Name: ${process[i].name}, Arrival: ${process[i].arrival}, Length: ${process[i].length}, Priority: ${process[i].priority}\n');
     }
     return waitingTime / numberOfProcesses;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-          automaticallyImplyLeading: false,
-          centerTitle: true,
-          leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () {
-                seriesList.clear();
-                ganttElements.clear();
-                processList.clear();
-                start.clear();
-                processList.clear();
-                ganttElements.clear();
-                globals.chosenScheduler = '';
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage()),
-                );
-              }),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              elevation: 20,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
-                child: Column(
-                  children: <Widget>[
-                    Expanded(
-                      flex: 1,
-                      child: Text('Average Waiting time= ${average()} ms'),
-                    ),
-                    Expanded(
-                      flex: 9,
-                      child: barChart(),
-                    )
-                  ],
-                ),
-              )),
-        ),
-      ),
-    );
-  }
-}
+*/
