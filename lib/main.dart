@@ -821,6 +821,17 @@ class ChartsDemoState extends State<ChartsDemo> {
       bool found = false;
       process.sort((a, b) =>
           (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
+      if (double.parse(process[0].arrival) != 0) {
+        process.insert(
+            0,
+            Proccesses(
+              arrival: '0',
+              length: process[0].arrival,
+              name: 'Dummy',
+              start: '0',
+              priority: '0',
+            ));
+      }
       for (int i = 0; i < process.length; i++) {
         oldArrival.add(Proccesses(
           start: process[i].start,
@@ -836,12 +847,11 @@ class ChartsDemoState extends State<ChartsDemo> {
           name: process[i].name,
           priority: process[i].priority,
         ));
-        print(
-            "Name: ${oldArrival[i].name}, Arrival: ${oldArrival[i].arrival}, Length: ${oldArrival[i].length}");
       }
 
       for (int i = 0; i < loop - 1; i++) {
-        if (double.parse(process[i].length) > double.parse(quantumTimeGot)) {
+        if ((double.parse(process[i].length) > double.parse(quantumTimeGot)) &&
+            process[i].name != 'Dummy') {
           double x =
               double.parse(process[i].length) - double.parse(quantumTimeGot);
           process[i].length = (double.parse(quantumTimeGot)).toString();
@@ -874,13 +884,53 @@ class ChartsDemoState extends State<ChartsDemo> {
               start: '0',
             ));
           }
-          process[i + 1].arrival = (double.parse(process[i].length) +
-                  double.parse(process[i].arrival))
-              .toString();
+          if ((double.parse(process[i].arrival) +
+                  double.parse(process[i].length)) <
+              double.parse(process[i + 1].arrival)) {
+            process.insert(
+                i + 1,
+                Proccesses(
+                    name: 'Dummy',
+                    arrival: (double.parse(process[i].length) +
+                            double.parse(process[i].arrival))
+                        .toString(),
+                    start: (double.parse(process[i].length) +
+                            double.parse(process[i].arrival))
+                        .toString(),
+                    priority: '0',
+                    length: (double.parse(process[i + 1].arrival) -
+                            (double.parse(process[i].length) +
+                                double.parse(process[i].arrival)))
+                        .toString()));
+          } else {
+            process[i + 1].arrival = (double.parse(process[i].length) +
+                    double.parse(process[i].arrival))
+                .toString();
+          }
         } else {
-          process[i + 1].arrival = (double.parse(process[i].length) +
-                  double.parse(process[i].arrival))
-              .toString();
+          if ((double.parse(process[i].arrival) +
+                  double.parse(process[i].length)) <
+              double.parse(process[i + 1].arrival)) {
+            process.insert(
+                i + 1,
+                Proccesses(
+                    name: 'Dummy',
+                    arrival: (double.parse(process[i].length) +
+                            double.parse(process[i].arrival))
+                        .toString(),
+                    start: (double.parse(process[i].length) +
+                            double.parse(process[i].arrival))
+                        .toString(),
+                    priority: '0',
+                    length: (double.parse(process[i + 1].arrival) -
+                            (double.parse(process[i].length) +
+                                double.parse(process[i].arrival)))
+                        .toString()));
+          } else {
+            process[i + 1].arrival = (double.parse(process[i].length) +
+                    double.parse(process[i].arrival))
+                .toString();
+          }
         }
         loop = process.length;
       }
@@ -934,12 +984,16 @@ class ChartsDemoState extends State<ChartsDemo> {
         }
       }
     }
+
+    //Round Robin Time Calculation
     if (globals.chosenScheduler == schedularTypes[5]['display']) {
       for (var i = 0; i < oldArrival.length; i++) {
         print(
             "Name: ${oldArrival[i].name}, Arrival: ${oldArrival[i].arrival}, Length: ${oldArrival[i].length}");
+        if (oldArrival[i].name != "Dummy") {
+          numberOfProcesses++;
+        }
       }
-      numberOfProcesses = oldArrival.length;
       for (int i = 0; i < oldArrival.length; i++) {
         for (int j = 0; j < process.length; j++) {
           if (oldArrival[i].name == process[j].name) {
@@ -954,7 +1008,9 @@ class ChartsDemoState extends State<ChartsDemo> {
         }
       }
       for (int i = 0; i < oldArrival.length; i++) {
-        waitingTime += (completion[i] - (double.parse(oldArrival[i].arrival) +  double.parse(oldBurst[i].length)));
+        waitingTime += (completion[i] -
+            (double.parse(oldArrival[i].arrival) +
+                double.parse(oldBurst[i].length)));
       }
     }
     return waitingTime / numberOfProcesses;
