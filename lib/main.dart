@@ -378,6 +378,25 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.red,
                             onPressed: () {
                               setState(() {
+                                process.removeAt(0);
+                              });
+                            },
+                            child: Text(
+                              'Clear First Process',
+                              style: TextStyle(
+                                fontSize: 16,
+                                wordSpacing: 1.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            color: Colors.red,
+                            onPressed: () {
+                              setState(() {
                                 process.removeLast();
                               });
                             },
@@ -810,58 +829,86 @@ class ChartsDemoState extends State<ChartsDemo> {
       }
     }
     //SJF Non Premative
-    //SJF Premative
-    //Priority Non Premative
-    if (globals.chosenScheduler == schedularTypes[3]['display']) {
+    else if (globals.chosenScheduler == schedularTypes[1]['display']) {
       process.sort((a, b) =>
           (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
-      for (int i = 0; i < process.length - 1; i++) {
-        if ((double.parse(process[i].priority) >
-                double.parse(process[i + 1].priority)) &&
-            (double.parse(process[i].arrival) ==
-                double.parse(process[i + 1].arrival))) {
-          Proccesses temp = Proccesses();
-          temp.priority = process[i + 1].priority;
-          temp.start = process[i + 1].start;
-          temp.arrival = process[i + 1].arrival;
-          temp.name = process[i + 1].name;
-          temp.length = process[i + 1].length;
-          process[i + 1] = process[i];
-          process[i] = temp;
+      /////////////////SORTING BY PRIORITY//////////////////////////////////////////////
+
+      for (var n = 0; n < process.length - 1; n++) {
+        for (int i = 0; i < process.length - 1; i++) {
+          if ((double.parse(process[i].length) >
+                  double.parse(process[i + 1].length)) &&
+              (double.parse(process[i].arrival) ==
+                  double.parse(process[i + 1].arrival))) {
+            Proccesses temp = Proccesses();
+            temp.priority = process[i + 1].priority;
+            temp.start = process[i + 1].start;
+            temp.arrival = process[i + 1].arrival;
+            temp.name = process[i + 1].name;
+            temp.length = process[i + 1].length;
+            process[i + 1] = process[i];
+            process[i] = temp;
+          }
         }
       }
-      if (process[0].arrival != '0') {
+      /////////////////////////////////////////////////////////////////////////////
+
+      if (double.parse(process[0].arrival) > 0) {
         process.insert(
             0,
             Proccesses(
               name: 'Dummy',
-              length: process[0].arrival,
-              start: '0',
               arrival: '0',
+              start: '0',
               priority: '0',
+              length: process[0].length,
             ));
+        completion.insert(0,
+            double.parse(process[0].length) + double.parse(process[0].arrival));
+        turnAround.insert(0, completion[0] - double.parse(process[0].arrival));
+        waitingTimeList.insert(
+            0, turnAround[0] - double.parse(process[0].length));
+      } else {
+        completion.insert(0,
+            double.parse(process[0].length) + double.parse(process[0].arrival));
+        turnAround.insert(0, completion[0] - double.parse(process[0].arrival));
+        waitingTimeList.insert(
+            0, turnAround[0] - double.parse(process[0].length));
       }
-      completion.insert(0,
-          double.parse(process[0].arrival) + double.parse(process[0].length));
-      turnAround.insert(0, completion[0] - double.parse(process[0].arrival));
-      waitingTimeList.insert(
-          0, turnAround[0] - double.parse(process[0].length));
-      int i = 1;
-      while (i < process.length) {
-        for (var j = i; j < process.length; j++) {
+
+      int i = 1, m = process.length, j;
+      while (i < m) {
+        for (j = i; j < process.length; j++) {
           if (double.parse(process[j].arrival) > completion[i - 1]) {
             break;
           }
         }
+        //
+        for (int n = 0; n < process.length - 1; n++) {
+          for (int y = i; y < j - 1; y++) {
+            if ((double.parse(process[y].length) >
+                double.parse(process[y + 1].length))) {
+              Proccesses temp = Proccesses();
+              temp.priority = process[y + 1].priority;
+              temp.start = process[y + 1].start;
+              temp.arrival = process[y + 1].arrival;
+              temp.name = process[y + 1].name;
+              temp.length = process[y + 1].length;
+              process[y + 1] = process[y];
+              process[y] = temp;
+            }
+          }
+        }
+        //
         if (double.parse(process[i].arrival) > completion[i - 1]) {
-          Proccesses temp1 = Proccesses();
-          temp1.name = "Dummy";
-          temp1.arrival = completion[i - 1].toString();
-          temp1.start = completion[i - 1].toString();
-          temp1.priority = '0';
-          temp1.length =
+          Proccesses dummy = Proccesses();
+          dummy.name = 'Dummy';
+          dummy.arrival = completion[i - 1].toString();
+          dummy.start = completion[i - 1].toString();
+          dummy.length =
               (double.parse(process[i].arrival) - completion[i - 1]).toString();
-          process.insert(i, temp1);
+          dummy.priority = '0';
+          process.insert(i, dummy);
           completion.insert(
               i, completion[i - 1] + double.parse(process[i].length));
           turnAround.insert(
@@ -869,7 +916,8 @@ class ChartsDemoState extends State<ChartsDemo> {
           waitingTimeList.insert(
               i, turnAround[i] - double.parse(process[i].length));
           i++;
-        } else if (process.length != i + 1) {
+          m++;
+        } else if (m != i + 1) {
           completion.insert(
               i, completion[i - 1] + double.parse(process[i].length));
           turnAround.insert(
@@ -885,8 +933,147 @@ class ChartsDemoState extends State<ChartsDemo> {
       turnAround.insert(i, completion[i] - double.parse(process[i].arrival));
       waitingTimeList.insert(
           i, turnAround[i] - double.parse(process[i].length));
+
+      for (int u = 0; u < process.length; u++) {
+        processList.add([process[u]]);
+      }
+      // for (int i = 0; i < processList.length; i++) {
+      //   print(
+      //       "name: ${processList[i][0].name}, arrival: ${processList[i][0].arrival}, length: ${processList[i][0].length}");
+      // }
       for (int i = 0; i < process.length; i++) {
-        processList.add([process[i]]);
+        if (processList[i][0].name == "Dummy") {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            colorFn: (Proccesses operation, _) =>
+                charts.ColorUtil.fromDartColor(Colors.black),
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        } else {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        }
+      }
+    }
+    //SJF Premative
+    //Priority Non Premative
+    else if (globals.chosenScheduler == schedularTypes[3]['display']) {
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
+      /////////////////SORTING BY PRIORITY//////////////////////////////////////////////
+
+      for (var n = 0; n < process.length - 1; n++) {
+        for (int i = 0; i < process.length - 1; i++) {
+          if ((double.parse(process[i].priority) >
+                  double.parse(process[i + 1].priority)) &&
+              (double.parse(process[i].arrival) ==
+                  double.parse(process[i + 1].arrival))) {
+            Proccesses temp = Proccesses();
+            temp.priority = process[i + 1].priority;
+            temp.start = process[i + 1].start;
+            temp.arrival = process[i + 1].arrival;
+            temp.name = process[i + 1].name;
+            temp.length = process[i + 1].length;
+            process[i + 1] = process[i];
+            process[i] = temp;
+          }
+        }
+      }
+      /////////////////////////////////////////////////////////////////////////////
+
+      if (double.parse(process[0].arrival) > 0) {
+        process.insert(
+            0,
+            Proccesses(
+              name: 'Dummy',
+              arrival: '0',
+              start: '0',
+              priority: '0',
+              length: process[0].length,
+            ));
+        completion.insert(0,
+            double.parse(process[0].length) + double.parse(process[0].arrival));
+        turnAround.insert(0, completion[0] - double.parse(process[0].arrival));
+        waitingTimeList.insert(
+            0, turnAround[0] - double.parse(process[0].length));
+      } else {
+        completion.insert(0,
+            double.parse(process[0].length) + double.parse(process[0].arrival));
+        turnAround.insert(0, completion[0] - double.parse(process[0].arrival));
+        waitingTimeList.insert(
+            0, turnAround[0] - double.parse(process[0].length));
+      }
+
+      int i = 1, m = process.length, j;
+      while (i < m) {
+        for (j = i; j < process.length; j++) {
+          if (double.parse(process[j].arrival) > completion[i - 1]) {
+            break;
+          }
+        }
+        //
+        for (int n = 0; n < process.length - 1; n++) {
+          for (int y = i; y < j - 1; y++) {
+            if ((double.parse(process[y].priority) >
+                double.parse(process[y + 1].priority))) {
+              Proccesses temp = Proccesses();
+              temp.priority = process[y + 1].priority;
+              temp.start = process[y + 1].start;
+              temp.arrival = process[y + 1].arrival;
+              temp.name = process[y + 1].name;
+              temp.length = process[y + 1].length;
+              process[y + 1] = process[y];
+              process[y] = temp;
+            }
+          }
+        }
+        //
+        if (double.parse(process[i].arrival) > completion[i - 1]) {
+          Proccesses dummy = Proccesses();
+          dummy.name = 'Dummy';
+          dummy.arrival = completion[i - 1].toString();
+          dummy.start = completion[i - 1].toString();
+          dummy.length =
+              (double.parse(process[i].arrival) - completion[i - 1]).toString();
+          dummy.priority = '0';
+          process.insert(i, dummy);
+          completion.insert(
+              i, completion[i - 1] + double.parse(process[i].length));
+          turnAround.insert(
+              i, completion[i] - double.parse(process[i].arrival));
+          waitingTimeList.insert(
+              i, turnAround[i] - double.parse(process[i].length));
+          i++;
+          m++;
+        } else if (m != i + 1) {
+          completion.insert(
+              i, completion[i - 1] + double.parse(process[i].length));
+          turnAround.insert(
+              i, completion[i] - double.parse(process[i].arrival));
+          waitingTimeList.insert(
+              i, turnAround[i] - double.parse(process[i].length));
+          i++;
+        } else {
+          break;
+        }
+      }
+      completion.insert(i, completion[i - 1] + double.parse(process[i].length));
+      turnAround.insert(i, completion[i] - double.parse(process[i].arrival));
+      waitingTimeList.insert(
+          i, turnAround[i] - double.parse(process[i].length));
+
+      for (int u = 0; u < process.length; u++) {
+        processList.add([process[u]]);
       }
       // for (int i = 0; i < processList.length; i++) {
       //   print(
@@ -918,7 +1105,7 @@ class ChartsDemoState extends State<ChartsDemo> {
     }
     //Priority Premative
     //Round Robin
-    if (globals.chosenScheduler == schedularTypes[5]['display']) {
+    else if (globals.chosenScheduler == schedularTypes[5]['display']) {
       String quantumTimeGot = globals.quantum;
       int loop = process.length, here = 0;
       bool found = false;
@@ -1078,7 +1265,7 @@ class ChartsDemoState extends State<ChartsDemo> {
   double average() {
     int numberOfProcesses = 0;
     double waitingTime = 0;
-    //FCFS average time calculation
+    //FCFS Time Calculation
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
       for (int i = 0; i < process.length; i++) {
         if (process[i].name != "Dummy") {
@@ -1089,8 +1276,17 @@ class ChartsDemoState extends State<ChartsDemo> {
         }
       }
     }
+    //SJF Non Primative Time Calculation
+    else if (globals.chosenScheduler == schedularTypes[1]['display']) {
+      for (var i = 0; i < process.length; i++) {
+        if (process[i].name != "Dummy") {
+          numberOfProcesses++;
+        }
+        waitingTime += waitingTimeList[i];
+      }
+    }
     //Priority Non Premative Time Calculation
-    if (globals.chosenScheduler == schedularTypes[3]['display']) {
+    else if (globals.chosenScheduler == schedularTypes[3]['display']) {
       for (var i = 0; i < process.length; i++) {
         if (process[i].name != "Dummy") {
           numberOfProcesses++;
@@ -1100,7 +1296,7 @@ class ChartsDemoState extends State<ChartsDemo> {
     }
     /////////////////////////////////////////////
     //Round Robin Time Calculation
-    if (globals.chosenScheduler == schedularTypes[5]['display']) {
+    else if (globals.chosenScheduler == schedularTypes[5]['display']) {
       for (var i = 0; i < oldArrival.length; i++) {
         print(
             "Name: ${oldArrival[i].name}, Arrival: ${oldArrival[i].arrival}, Length: ${oldArrival[i].length}");
@@ -1315,7 +1511,6 @@ if (globals.chosenScheduler == schedularTypes[0]['display']) {
         }
         //=========================================================\\
       }
-
       for (int i = 0; i < process.length - 1; i++) {
         if (double.parse(process[0].arrival) != 0) {
           process.insert(
@@ -1335,7 +1530,6 @@ if (globals.chosenScheduler == schedularTypes[0]['display']) {
             double dummyIndex = double.parse(process[i + 1].arrival) -
                 (double.parse(process[i].arrival) +
                     double.parse(process[i].length));
-
             setState(() {
               process.insert(
                   i + 1,
@@ -1445,24 +1639,19 @@ if (globals.chosenScheduler == schedularTypes[0]['display']) {
     }
     seriesList = ganttElements;
   }
-
   double startDouble = 0, length = 0, waitingTime = 0;
-
   double average() {
     double numberOfProcesses = 0;
-
     //FCFS average time calculation
     if (globals.chosenScheduler == schedularTypes[0]['display'] ||
         globals.chosenScheduler == schedularTypes[1]['display']) {
       process.sort((a, b) =>
           (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
       start.add(double.parse(process[0].arrival)); //start=0
-
       for (int i = 1; i < process.length; i++) {
         startDouble += double.parse(process[i - 1].length);
         start.add(startDouble);
       }
-
       for (int i = 0; i < process.length; i++) {
         waitingTime += start[i] - double.parse(process[i].arrival);
       }
