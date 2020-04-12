@@ -32,7 +32,8 @@ class HomePage extends StatefulWidget {
 }
 
 List<List<Proccesses>> processList = [];
-
+List<Proccesses> oldArrival = [];
+List<Proccesses> oldBurst = [];
 List<Proccesses> process = [];
 int highestStart = 0, longestLength = 0;
 
@@ -48,6 +49,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomPadding: true,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         elevation: 4,
         title: Text('OS Project'),
@@ -436,11 +439,84 @@ class _HomePageState extends State<HomePage> {
                             onPressed: () {
                               //draw gant chart by choosing scheduler type
                               if (globals.chosenScheduler != '') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => ChartsDemo()),
-                                );
+                                if (globals.chosenScheduler == "Round Robin") {
+                                  setState(() {});
+                                  //function of showing alert
+                                  TextEditingController quantumTime =
+                                      TextEditingController();
+                                  // set up the button
+                                  Widget addButton = FlatButton(
+                                    child: Text("Add"),
+                                    onPressed: () {
+                                      setState(() {
+                                        if (quantumTime.text.isNotEmpty &&
+                                            double.parse(quantumTime.text) >
+                                                0) {
+                                          globals.quantum =
+                                              quantumTime.text.toString();
+                                          Navigator.pop(context);
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChartsDemo()),
+                                          );
+                                        } else {
+                                          Toast.show(
+                                              "Please Insert Quantum Time",
+                                              context,
+                                              duration: Toast.LENGTH_SHORT,
+                                              gravity: Toast.BOTTOM);
+                                        }
+                                      });
+                                    },
+                                  );
+                                  Widget cancelButton = FlatButton(
+                                    child: Text("Cancel"),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                  // set up the AlertDialog
+                                  AlertDialog alert = AlertDialog(
+                                    title: Text("Insert Quantum Time"),
+                                    content: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      children: <Widget>[
+                                        Expanded(
+                                          flex: 3,
+                                          child: TextField(
+                                            controller: quantumTime,
+                                            keyboardType: TextInputType.text,
+                                            autofocus: true,
+                                            decoration: InputDecoration(
+                                                labelText: "Quantum Time",
+                                                hintText: "Quantum Time",
+                                                border: OutlineInputBorder()),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      addButton,
+                                      cancelButton,
+                                    ],
+                                  );
+
+                                  // show the dialog
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return alert;
+                                    },
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => ChartsDemo()),
+                                  );
+                                }
                               } else {
                                 Toast.show(
                                     "Please Choose a Scheduler Type", context,
@@ -503,8 +579,8 @@ List schedularTypes = [
 ];
 
 class Proccesses extends StatelessWidget {
-  final String name, length, arrival, priority;
-  String start;
+  final String name;
+  String start, length, arrival, priority;
   final Color coloring;
   Proccesses(
       {this.name,
@@ -647,7 +723,6 @@ class ChartsDemoState extends State<ChartsDemo> {
   void initState() {
     super.initState();
     //FCFS
-    //adding Dummy Chart
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
       //sorting for first ararival
       process.sort((a, b) =>
@@ -697,7 +772,7 @@ class ChartsDemoState extends State<ChartsDemo> {
                     double.parse(process[i].length))
                 .toString();
           } else {
-            start[i] = ((start[i - 1]) + double.parse(process[i - 1].length));
+            start[i] += ((start[i - 1]) + double.parse(process[i - 1].length));
             process[i].start =
                 (((start[i - 1]) + double.parse(process[i - 1].length)))
                     .toString();
@@ -739,12 +814,114 @@ class ChartsDemoState extends State<ChartsDemo> {
     //SJF Premative
     //Priority
     //Round Robin
+
+    if (globals.chosenScheduler == schedularTypes[5]['display']) {
+      String quantumTimeGot = globals.quantum;
+      int loop = process.length, here = 0;
+      bool found = false;
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
+      for (int i = 0; i < process.length; i++) {
+        oldArrival.add(Proccesses(
+          start: process[i].start,
+          arrival: process[i].arrival,
+          length: process[i].length,
+          name: process[i].name,
+          priority: process[i].priority,
+        ));
+        oldBurst.add(Proccesses(
+          start: process[i].start,
+          arrival: process[i].arrival,
+          length: process[i].length,
+          name: process[i].name,
+          priority: process[i].priority,
+        ));
+        print(
+            "Name: ${oldArrival[i].name}, Arrival: ${oldArrival[i].arrival}, Length: ${oldArrival[i].length}");
+      }
+
+      for (int i = 0; i < loop - 1; i++) {
+        if (double.parse(process[i].length) > double.parse(quantumTimeGot)) {
+          double x =
+              double.parse(process[i].length) - double.parse(quantumTimeGot);
+          process[i].length = (double.parse(quantumTimeGot)).toString();
+          double y =
+              double.parse(process[i].arrival) + double.parse(quantumTimeGot);
+          for (int j = i + 1; j < loop; j++) {
+            if (double.parse(process[j].arrival) > y) {
+              found = true;
+              here = j;
+              break;
+            }
+          }
+          if (found) {
+            process.insert(
+                here,
+                Proccesses(
+                  name: process[i].name,
+                  length: x.toString(),
+                  arrival: y.toString(),
+                  priority: '0',
+                  start: '0',
+                ));
+            found = false;
+          } else {
+            process.add(Proccesses(
+              name: process[i].name,
+              length: x.toString(),
+              arrival: y.toString(),
+              priority: '0',
+              start: '0',
+            ));
+          }
+          process[i + 1].arrival = (double.parse(process[i].length) +
+                  double.parse(process[i].arrival))
+              .toString();
+        } else {
+          process[i + 1].arrival = (double.parse(process[i].length) +
+                  double.parse(process[i].arrival))
+              .toString();
+        }
+        loop = process.length;
+      }
+      for (int i = 0; i < process.length; i++) {
+        processList.add([process[i]]);
+      }
+      // for (int i = 0; i < processList.length; i++) {
+      //   print(
+      //       "name: ${processList[i][0].name}, arrival: ${processList[i][0].arrival}, length: ${processList[i][0].length}");
+      // }
+      for (int i = 0; i < process.length; i++) {
+        if (processList[i][0].name == "Dummy") {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            colorFn: (Proccesses operation, _) =>
+                charts.ColorUtil.fromDartColor(Colors.black),
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        } else {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        }
+      }
+    }
     seriesList = ganttElements;
   }
 
+  List<double> completion = [];
   //calculation of average time
   double average() {
-    double numberOfProcesses = 0;
+    int numberOfProcesses = 0;
     double waitingTime = 0;
     //FCFS average time calculation
     if (globals.chosenScheduler == schedularTypes[0]['display']) {
@@ -757,6 +934,29 @@ class ChartsDemoState extends State<ChartsDemo> {
         }
       }
     }
+    if (globals.chosenScheduler == schedularTypes[5]['display']) {
+      for (var i = 0; i < oldArrival.length; i++) {
+        print(
+            "Name: ${oldArrival[i].name}, Arrival: ${oldArrival[i].arrival}, Length: ${oldArrival[i].length}");
+      }
+      numberOfProcesses = oldArrival.length;
+      for (int i = 0; i < oldArrival.length; i++) {
+        for (int j = 0; j < process.length; j++) {
+          if (oldArrival[i].name == process[j].name) {
+            oldArrival[i].length = (double.parse(oldArrival[i].length) -
+                    double.parse(process[j].length))
+                .toString();
+            if (double.parse(oldArrival[i].length) == 0) {
+              completion.add(double.parse(process[j].arrival) +
+                  double.parse(process[j].length));
+            }
+          }
+        }
+      }
+      for (int i = 0; i < oldArrival.length; i++) {
+        waitingTime += (completion[i] - (double.parse(oldArrival[i].arrival) +  double.parse(oldBurst[i].length)));
+      }
+    }
     return waitingTime / numberOfProcesses;
   }
 
@@ -764,6 +964,8 @@ class ChartsDemoState extends State<ChartsDemo> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        resizeToAvoidBottomPadding: true,
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: Text(widget.title),
           automaticallyImplyLeading: false,
@@ -778,6 +980,8 @@ class ChartsDemoState extends State<ChartsDemo> {
                 processList.clear();
                 ganttElements.clear();
                 temp.clear();
+                completion.clear();
+                oldArrival.clear();
                 globals.chosenScheduler = '';
                 Navigator.pop(context);
                 Navigator.push(
