@@ -566,11 +566,11 @@ List schedularTypes = [
   },
   {
     "display": "Priority Non Premative",
-    "value": "SJF Premative",
+    "value": "Priority Non Premative",
   },
   {
     "display": "Priority Premative",
-    "value": "SJF Premative",
+    "value": "Priority Premative",
   },
   {
     "display": "Round Robin",
@@ -579,8 +579,7 @@ List schedularTypes = [
 ];
 
 class Proccesses extends StatelessWidget {
-  final String name;
-  String start, length, arrival, priority;
+  String name, start, length, arrival, priority;
   final Color coloring;
   Proccesses(
       {this.name,
@@ -812,9 +811,113 @@ class ChartsDemoState extends State<ChartsDemo> {
     }
     //SJF Non Premative
     //SJF Premative
-    //Priority
+    //Priority Non Premative
+    if (globals.chosenScheduler == schedularTypes[3]['display']) {
+      process.sort((a, b) =>
+          (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
+      for (int i = 0; i < process.length - 1; i++) {
+        if ((double.parse(process[i].priority) >
+                double.parse(process[i + 1].priority)) &&
+            (double.parse(process[i].arrival) ==
+                double.parse(process[i + 1].arrival))) {
+          Proccesses temp = Proccesses();
+          temp.priority = process[i + 1].priority;
+          temp.start = process[i + 1].start;
+          temp.arrival = process[i + 1].arrival;
+          temp.name = process[i + 1].name;
+          temp.length = process[i + 1].length;
+          process[i + 1] = process[i];
+          process[i] = temp;
+        }
+      }
+      if (process[0].arrival != '0') {
+        process.insert(
+            0,
+            Proccesses(
+              name: 'Dummy',
+              length: process[0].arrival,
+              start: '0',
+              arrival: '0',
+              priority: '0',
+            ));
+      }
+      completion.insert(0,
+          double.parse(process[0].arrival) + double.parse(process[0].length));
+      turnAround.insert(0, completion[0] - double.parse(process[0].arrival));
+      waitingTimeList.insert(
+          0, turnAround[0] - double.parse(process[0].length));
+      int i = 1;
+      while (i < process.length) {
+        for (var j = i; j < process.length; j++) {
+          if (double.parse(process[j].arrival) > completion[i - 1]) {
+            break;
+          }
+        }
+        if (double.parse(process[i].arrival) > completion[i - 1]) {
+          Proccesses temp1 = Proccesses();
+          temp1.name = "Dummy";
+          temp1.arrival = completion[i - 1].toString();
+          temp1.start = completion[i - 1].toString();
+          temp1.priority = '0';
+          temp1.length =
+              (double.parse(process[i].arrival) - completion[i - 1]).toString();
+          process.insert(i, temp1);
+          completion.insert(
+              i, completion[i - 1] + double.parse(process[i].length));
+          turnAround.insert(
+              i, completion[i] - double.parse(process[i].arrival));
+          waitingTimeList.insert(
+              i, turnAround[i] - double.parse(process[i].length));
+          i++;
+        } else if (process.length != i + 1) {
+          completion.insert(
+              i, completion[i - 1] + double.parse(process[i].length));
+          turnAround.insert(
+              i, completion[i] - double.parse(process[i].arrival));
+          waitingTimeList.insert(
+              i, turnAround[i] - double.parse(process[i].length));
+          i++;
+        } else {
+          break;
+        }
+      }
+      completion.insert(i, completion[i - 1] + double.parse(process[i].length));
+      turnAround.insert(i, completion[i] - double.parse(process[i].arrival));
+      waitingTimeList.insert(
+          i, turnAround[i] - double.parse(process[i].length));
+      for (int i = 0; i < process.length; i++) {
+        processList.add([process[i]]);
+      }
+      // for (int i = 0; i < processList.length; i++) {
+      //   print(
+      //       "name: ${processList[i][0].name}, arrival: ${processList[i][0].arrival}, length: ${processList[i][0].length}");
+      // }
+      for (int i = 0; i < process.length; i++) {
+        if (processList[i][0].name == "Dummy") {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            colorFn: (Proccesses operation, _) =>
+                charts.ColorUtil.fromDartColor(Colors.black),
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        } else {
+          ganttElements.add(charts.Series<Proccesses, String>(
+            id: '${process[i].name}',
+            domainFn: (Proccesses operation, _) => 'Start',
+            measureFn: (Proccesses operation, _) =>
+                double.parse(process[i].length),
+            data: processList[i],
+            labelAccessorFn: (Proccesses operation, _) => ('${operation.name}'),
+          ));
+        }
+      }
+    }
+    //Priority Premative
     //Round Robin
-
     if (globals.chosenScheduler == schedularTypes[5]['display']) {
       String quantumTimeGot = globals.quantum;
       int loop = process.length, here = 0;
@@ -969,6 +1072,8 @@ class ChartsDemoState extends State<ChartsDemo> {
   }
 
   List<double> completion = [];
+  List<double> turnAround = [];
+  List<double> waitingTimeList = [];
   //calculation of average time
   double average() {
     int numberOfProcesses = 0;
@@ -984,7 +1089,16 @@ class ChartsDemoState extends State<ChartsDemo> {
         }
       }
     }
-
+    //Priority Non Premative Time Calculation
+    if (globals.chosenScheduler == schedularTypes[3]['display']) {
+      for (var i = 0; i < process.length; i++) {
+        if (process[i].name != "Dummy") {
+          numberOfProcesses++;
+        }
+        waitingTime += waitingTimeList[i];
+      }
+    }
+    /////////////////////////////////////////////
     //Round Robin Time Calculation
     if (globals.chosenScheduler == schedularTypes[5]['display']) {
       for (var i = 0; i < oldArrival.length; i++) {
@@ -1038,6 +1152,8 @@ class ChartsDemoState extends State<ChartsDemo> {
                 temp.clear();
                 completion.clear();
                 oldArrival.clear();
+                turnAround.clear();
+                waitingTimeList.clear();
                 globals.chosenScheduler = '';
                 Navigator.pop(context);
                 Navigator.push(
