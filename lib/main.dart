@@ -1108,7 +1108,7 @@ class ChartsDemoState extends State<ChartsDemo> {
         }
       }
     }
-    //Priority Premative
+    //Priority Premative to be added here
     //Round Robin
     else if (globals.chosenScheduler == schedularTypes[5]['display']) {
       String quantumTimeGot = globals.quantum;
