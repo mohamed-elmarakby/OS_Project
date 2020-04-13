@@ -530,11 +530,18 @@ class _HomePageState extends State<HomePage> {
                                     },
                                   );
                                 } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => ChartsDemo()),
-                                  );
+                                  if (process.length != 0) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ChartsDemo()),
+                                    );
+                                  } else {
+                                    Toast.show(
+                                        "Please Insert Some Processes", context,
+                                        duration: Toast.LENGTH_SHORT,
+                                        gravity: Toast.BOTTOM);
+                                  }
                                 }
                               } else {
                                 Toast.show(
@@ -746,18 +753,16 @@ class ChartsDemoState extends State<ChartsDemo> {
       process.sort((a, b) =>
           (double.parse(a.arrival)).compareTo(double.parse(b.arrival)));
       //adding dummy activities
-      for (int i = 0; i < process.length - 1; i++) {
-        if (double.parse(process[0].arrival) != 0) {
-          process.insert(
-              0,
-              Proccesses(
-                arrival: '0',
-                length: process[0].arrival,
-                name: 'Dummy',
-                start: '0',
-                priority: '0',
-              ));
-        }
+      if (double.parse(process[0].arrival) != 0) {
+        process.insert(
+            0,
+            Proccesses(
+              arrival: '0',
+              length: process[0].arrival,
+              name: 'Dummy',
+              start: '0',
+              priority: '0',
+            ));
       }
       //getting real start time
       double startDouble = 0;
