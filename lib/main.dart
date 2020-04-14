@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         elevation: 4,
-        title: Text('OS Project'),
+        title: Text('Process Scheduler'),
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
