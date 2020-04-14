@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
     ]);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'OS Project',
+      title: 'Process Scheduler',
       theme: ThemeData.dark(),
       home: HomePage(),
     );
