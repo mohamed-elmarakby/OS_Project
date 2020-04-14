@@ -1,16 +1,29 @@
 # Process Scheduler
 
-A new Flutter project.
+Process Scheduler is a flutter mobile application compatible with both IOS, Android, Windows, and Mac That aims to ***draw*** the processes inputs from the user based on the principles of Operating Systems Scheduling and calculating the average time.
 
-## Getting Started
+## Screens from Desktop
 
-This project is a starting point for a Flutter application.
+1.The .exe file![Desktop Icon](Screenshots/desktop/desktopIcon.png)
 
-A few resources to get you started if this is your first Flutter project:
+2.Desktop Menu![Desktop Menu](Screenshots/desktop/desktopMenu.png)
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+3.Adding a Process![Desktop Adding](Screenshots/desktop/desktopAddProcess.png)
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+4.Choosing a Schedulers Type![Desktop Scheduler](Screenshots/desktop/desktopChooseType.png)
+
+5.Gantt Chart Drawn with the average time calculated![Desktop Gantt](Screenshots/desktop/desktopDrawing.png)
+
+## Screens from Phone
+
+1.Phone's Icon![Phone Icon](Screenshots/phone/phoneIcon.jpg)
+
+2.Phone Menu![Phone Menu](Screenshots/phone/phoneMenu1.jpg)
+Phone Menu![Phone Menu](Screenshots/phone/phoneMenu2.jpg)
+Phone Menu![Phone Menu](Screenshots/phone/phoneMenu3.jpg)
+
+3.Adding a Process![Phone Adding](Screenshots/phone/phoneAddProcess.jpg)
+
+4.Choosing a Schedulers Type![Phone Scheduler](Screenshots/phone/phoneChooseType.jpg)
+
+5.Gantt Chart Drawn with the average time calculated![Phone Gantt](Screenshots/phone/phoneDrawing.jpg)
