@@ -1,4 +1,4 @@
-# os_project
+# Process Scheduler
 
 A new Flutter project.
 
