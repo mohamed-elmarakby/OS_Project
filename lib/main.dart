@@ -1074,11 +1074,15 @@ class ChartsDemoState extends State<ChartsDemo> {
                   }
                 }
               }
-              process.insert(i + 1, readyQ[0]);
-              readyQ.removeAt(0);
-              process[i + 1].arrival = (double.parse(process[i].length) +
-                      double.parse(process[i].arrival))
-                  .toString();
+
+              if (readyQ.length > 0) {
+                process.insert(i + 1, readyQ[0]);
+                readyQ.removeAt(0);
+                process[i + 1].arrival = (double.parse(process[i].length) +
+                        double.parse(process[i].arrival))
+                    .toString();
+              }
+
               break;
             } else {
               readyQ.add(process[j + 1]);
