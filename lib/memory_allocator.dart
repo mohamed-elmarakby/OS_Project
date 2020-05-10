@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:dropdown_formfield/dropdown_formfield.dart';
 import 'package:flutter/material.dart';
 import 'package:toast/toast.dart';
@@ -842,7 +841,7 @@ List<MemProcess> holes = [],
     memoryProcesses2 = [];
 List<MemeProc> segmentTable = [];
 List<MemProcess> readyToDraw = [];
-bool _direction = true;
+bool direction = true;
 
 class Allocation extends StatefulWidget {
   //
@@ -864,6 +863,8 @@ class AllocationState extends State<Allocation> {
       seriesList,
       animate: true,
       vertical: true,
+      barGroupingType: charts.BarGroupingType.groupedStacked,
+      flipVerticalAxis: false,
       domainAxis: new charts.OrdinalAxisSpec(
           renderSpec: new charts.SmallTickRendererSpec(
 
@@ -881,9 +882,8 @@ class AllocationState extends State<Allocation> {
       primaryMeasureAxis: new charts.NumericAxisSpec(
           renderSpec: new charts.GridlineRendererSpec(
               // Tick and Label styling here.
-
               labelStyle: new charts.TextStyleSpec(
-                  fontSize: 26, // size in Pts.
+                  fontSize: 18, // size in Pts.
                   color: charts.MaterialPalette.white),
 
               // Change the line colors to match text color.
@@ -891,7 +891,6 @@ class AllocationState extends State<Allocation> {
                   thickness: 4, color: charts.MaterialPalette.white))),
       barRendererDecorator: charts.BarLabelDecorator<String>(),
       behaviors: [new charts.SeriesLegend()],
-      barGroupingType: charts.BarGroupingType.stacked,
       defaultRenderer: charts.BarRendererConfig(
         groupingType: charts.BarGroupingType.stacked,
       ),
@@ -923,7 +922,7 @@ class AllocationState extends State<Allocation> {
               // Tick and Label styling here.
 
               labelStyle: new charts.TextStyleSpec(
-                  fontSize: 26, // size in Pts.
+                  fontSize: 18, // size in Pts.
                   color: charts.MaterialPalette.white),
 
               // Change the line colors to match text color.
@@ -939,9 +938,7 @@ class AllocationState extends State<Allocation> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
+  drawingFunction() {
     for (var i = 0; i < memoryHoles.length; i++) {
       MemProcess tempH = MemProcess();
       tempH.sName = memoryHoles[i].sName;
@@ -1051,41 +1048,84 @@ class AllocationState extends State<Allocation> {
         for (var i = 0; i < readyToDraw.length; i++) {
           memoryList.add([readyToDraw[i]]);
         }
-        for (int i = 0; i < readyToDraw.length; i++) {
-          if (memoryList[i][0].pName == "Busy") {
-            memElements.add(charts.Series<MemProcess, String>(
-              id: '${readyToDraw[i].pName}',
-              domainFn: (MemProcess operation, _) => 'Start',
-              measureFn: (MemProcess operation, _) =>
-                  double.parse(readyToDraw[i].length),
-              data: memoryList[i],
-              colorFn: (MemProcess operation, _) =>
-                  charts.ColorUtil.fromDartColor(Colors.black),
-              labelAccessorFn: (MemProcess operation, _) =>
-                  ('${operation.pName}'),
-            ));
-          } else if (memoryList[i][0].pName == "Hole") {
-            memElements.add(charts.Series<MemProcess, String>(
-              id: '${readyToDraw[i].pName}',
-              domainFn: (MemProcess operation, _) => 'Start',
-              measureFn: (MemProcess operation, _) =>
-                  double.parse(readyToDraw[i].length),
-              data: memoryList[i],
-              colorFn: (MemProcess operation, _) =>
-                  charts.ColorUtil.fromDartColor(Colors.red),
-              labelAccessorFn: (MemProcess operation, _) =>
-                  ('${operation.pName}'),
-            ));
-          } else {
-            memElements.add(charts.Series<MemProcess, String>(
-              id: '${readyToDraw[i].pName}: ${readyToDraw[i].sName}',
-              domainFn: (MemProcess operation, _) => 'Start',
-              measureFn: (MemProcess operation, _) =>
-                  double.parse(readyToDraw[i].length),
-              data: memoryList[i],
-              labelAccessorFn: (MemProcess operation, _) =>
-                  ('${operation.pName}: ${operation.sName}'),
-            ));
+        if (!direction) {
+          for (int i = 0; i < readyToDraw.length; i++) {
+            if (memoryList[i][0].pName == "Busy") {
+              memElements.add(charts.Series<MemProcess, String>(
+                id: '${readyToDraw[i].pName}',
+                domainFn: (MemProcess operation, _) => 'Memory',
+                measureFn: (MemProcess operation, _) =>
+                    double.parse(readyToDraw[i].length),
+                data: memoryList[i],
+                colorFn: (MemProcess operation, _) =>
+                    charts.ColorUtil.fromDartColor(Colors.black),
+                labelAccessorFn: (MemProcess operation, _) =>
+                    ('${operation.pName}'),
+              ));
+            } else if (memoryList[i][0].pName == "Hole") {
+              memElements.add(charts.Series<MemProcess, String>(
+                id: '${readyToDraw[i].pName}',
+                domainFn: (MemProcess operation, _) => 'Memory',
+                measureFn: (MemProcess operation, _) =>
+                    double.parse(readyToDraw[i].length),
+                data: memoryList[i],
+                colorFn: (MemProcess operation, _) =>
+                    charts.ColorUtil.fromDartColor(Colors.red),
+                labelAccessorFn: (MemProcess operation, _) =>
+                    ('${operation.pName}'),
+              ));
+            } else {
+              memElements.add(charts.Series<MemProcess, String>(
+                id: '${readyToDraw[i].pName}: ${readyToDraw[i].sName}',
+                domainFn: (MemProcess operation, _) => 'Memory',
+                measureFn: (MemProcess operation, _) =>
+                    double.parse(readyToDraw[i].length),
+                data: memoryList[i],
+                labelAccessorFn: (MemProcess operation, _) =>
+                    ('${operation.pName}: ${operation.sName}'),
+              ));
+            }
+          }
+        } else {
+          for (int i = 0; i < readyToDraw.length; i++) {
+            if (memoryList[i][0].pName == "Busy") {
+              memElements.add(charts.Series<MemProcess, String>(
+                id: '${readyToDraw[i].pName}',
+                seriesCategory: 'Memory',
+                domainFn: (MemProcess operation, _) => 'Memory',
+                measureFn: (MemProcess operation, _) =>
+                    double.parse(readyToDraw[i].length),
+                data: memoryList[i],
+                colorFn: (MemProcess operation, _) =>
+                    charts.ColorUtil.fromDartColor(Colors.black),
+                labelAccessorFn: (MemProcess operation, _) =>
+                    ('${operation.pName}'),
+              ));
+            } else if (memoryList[i][0].pName == "Hole") {
+              memElements.add(charts.Series<MemProcess, String>(
+                id: '${readyToDraw[i].pName}',
+                seriesCategory: 'Memory',
+                domainFn: (MemProcess operation, _) => 'Memory',
+                measureFn: (MemProcess operation, _) =>
+                    double.parse(readyToDraw[i].length),
+                data: memoryList[i],
+                colorFn: (MemProcess operation, _) =>
+                    charts.ColorUtil.fromDartColor(Colors.red),
+                labelAccessorFn: (MemProcess operation, _) =>
+                    ('${operation.pName}'),
+              ));
+            } else {
+              memElements.add(charts.Series<MemProcess, String>(
+                seriesCategory: 'Memory',
+                id: '${readyToDraw[i].pName}: ${readyToDraw[i].sName}',
+                domainFn: (MemProcess operation, _) => 'Memory',
+                measureFn: (MemProcess operation, _) =>
+                    double.parse(readyToDraw[i].length),
+                data: memoryList[i],
+                labelAccessorFn: (MemProcess operation, _) =>
+                    ('${operation.pName}: ${operation.sName}'),
+              ));
+            }
           }
         }
       }
@@ -1206,6 +1246,7 @@ class AllocationState extends State<Allocation> {
         for (int i = 0; i < readyToDraw.length; i++) {
           if (memoryList[i][0].pName == "Busy") {
             memElements.add(charts.Series<MemProcess, String>(
+              displayName: 'Busy',
               id: '${readyToDraw[i].pName}',
               domainFn: (MemProcess operation, _) => 'Start',
               measureFn: (MemProcess operation, _) =>
@@ -1218,6 +1259,7 @@ class AllocationState extends State<Allocation> {
             ));
           } else if (memoryList[i][0].pName == "Hole") {
             memElements.add(charts.Series<MemProcess, String>(
+              displayName: 'Hole',
               id: '${readyToDraw[i].pName}',
               domainFn: (MemProcess operation, _) => 'Start',
               measureFn: (MemProcess operation, _) =>
@@ -1230,6 +1272,7 @@ class AllocationState extends State<Allocation> {
             ));
           } else {
             memElements.add(charts.Series<MemProcess, String>(
+              displayName: '${readyToDraw[i].pName}: ${readyToDraw[i].sName}',
               id: '${readyToDraw[i].pName}: ${readyToDraw[i].sName}',
               domainFn: (MemProcess operation, _) => 'Start',
               measureFn: (MemProcess operation, _) =>
@@ -1265,7 +1308,17 @@ class AllocationState extends State<Allocation> {
         }
       }
     }
-    seriesList = memElements;
+    if (!direction) {
+      seriesList = memElements;
+    } else {
+      seriesList = memElements.reversed.toList();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    drawingFunction();
   }
 
   @override
@@ -1283,7 +1336,17 @@ class AllocationState extends State<Allocation> {
               icon: Icon(Icons.rotate_right),
               onPressed: () {
                 setState(() {
-                  _direction = !_direction;
+                  direction = !direction;
+                  seriesList.clear();
+                  memElements.clear();
+                  memoryList.clear();
+                  memoryProcesses1.clear();
+                  memoryProcesses2.clear();
+                  holes.clear();
+                  segments.clear();
+                  segmentTable.clear();
+                  readyToDraw.clear();
+                  drawingFunction();
                 });
               },
             )
@@ -1313,7 +1376,7 @@ class AllocationState extends State<Allocation> {
             child: Row(
               children: [
                 Expanded(
-                  flex: 6,
+                  flex: 8,
                   child: Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
@@ -1323,7 +1386,11 @@ class AllocationState extends State<Allocation> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24.0, vertical: 16),
                         child: Expanded(
-                          child: _direction ? bChart() : bChartHorizontal(),
+                          child: direction
+                              ? Container(
+                                  child: bChart(),
+                                )
+                              : bChartHorizontal(),
                         ),
                       )),
                 ),
@@ -1445,7 +1512,7 @@ class AllocationState extends State<Allocation> {
                                             Expanded(
                                               flex: 1,
                                               child: Text(
-                                                "Process Name",
+                                                "Process\nName",
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   wordSpacing: 1.5,
@@ -1456,7 +1523,7 @@ class AllocationState extends State<Allocation> {
                                             Expanded(
                                               flex: 1,
                                               child: Text(
-                                                "Segment Name",
+                                                "Segment\nName",
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   wordSpacing: 1.5,
@@ -1467,7 +1534,7 @@ class AllocationState extends State<Allocation> {
                                             Expanded(
                                               flex: 1,
                                               child: Text(
-                                                "Segment Size",
+                                                "Segment\nSize",
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   wordSpacing: 1.5,
