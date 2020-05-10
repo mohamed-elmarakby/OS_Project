@@ -1,3 +1,2 @@
 library my_prj.globals;
-
-String chosenScheduler= '',quantum = '';
+String chosenScheduler= '',quantum = '',fitType = '';
