@@ -996,6 +996,38 @@ class AllocationState extends State<Allocation> {
             }
           }
         }
+        for (var i = 0; i < memoryProcesses2.length; i++) {
+          for (var j = 0; j < readyToDraw.length; j++) {
+            if (memoryProcesses2[i].pName == readyToDraw[j].pName &&
+                memoryProcesses2[i].sName == readyToDraw[j].sName) {
+              memoryProcesses2.removeAt(i);
+              i = -1;
+              break;
+            }
+          }
+        }
+        for (var i = 0; i < memoryProcesses2.length; i++) {
+          for (var j = 0; j < readyToDraw.length; j++) {
+            if (readyToDraw[j].pName == memoryProcesses2[i].pName) {
+              memoryProcesses2.add(readyToDraw[j]);
+              readyToDraw.removeAt(j);
+            }
+          }
+        }
+        int x = 0;
+        for (var i = 0; i < readyToDraw.length; i++) {
+          if (readyToDraw[i].pName != 'Hole' &&
+              readyToDraw[i].pName != 'Busy') {
+            MemeProc meme = MemeProc();
+            meme.start = readyToDraw[i].start;
+            meme.pName = readyToDraw[i].pName;
+            meme.sName = readyToDraw[i].sName;
+            meme.index = x.toString();
+            meme.length = readyToDraw[i].length;
+            x++;
+            segmentTable.add(meme);
+          }
+        }
         for (var i = 0; i < holes.length; i++) {
           MemProcess temp = MemProcess();
           temp = holes[i];
@@ -1129,35 +1161,27 @@ class AllocationState extends State<Allocation> {
           }
         }
       }
-      for (var i = 0; i < memoryProcesses2.length; i++) {
-        for (var j = 0; j < readyToDraw.length; j++) {
-          if (memoryProcesses2[i].pName == readyToDraw[j].pName &&
-              memoryProcesses2[i].sName == readyToDraw[j].sName) {
-            memoryProcesses2.removeAt(i);
-            i = -1;
-            break;
-          }
-        }
-      }
-      int x = 0;
-      for (var i = 0; i < readyToDraw.length; i++) {
-        if (readyToDraw[i].pName != 'Hole' && readyToDraw[i].pName != 'Busy') {
-          MemeProc meme = MemeProc();
-          meme.start = readyToDraw[i].start;
-          meme.pName = readyToDraw[i].pName;
-          meme.sName = readyToDraw[i].sName;
-          meme.index = x.toString();
-          meme.length = readyToDraw[i].length;
-          x++;
-          segmentTable.add(meme);
-        }
-      }
     } else if (globals.fitType == 'Best Fit') {
       {
         holes.sort((a, b) =>
             (double.parse(a.length)).compareTo(double.parse(b.length)));
-        segments.sort((a, b) =>
-            (double.parse(a.length)).compareTo(double.parse(b.length)));
+        for (var j = 0; j < segments.length; j++) {
+          for (var i = 0; i < segments.length - 1; i++) {
+            if (segments[i].pName == segments[i + 1].pName &&
+                double.parse(segments[i].length) >
+                    double.parse(segments[i + 1].length)) {
+              MemProcess temporarySwitch = MemProcess();
+              temporarySwitch.pName = segments[i + 1].pName;
+              temporarySwitch.sName = segments[i + 1].sName;
+              temporarySwitch.start = segments[i + 1].start;
+              temporarySwitch.length = segments[i + 1].length;
+              temporarySwitch.priority = segments[i + 1].priority;
+              segments[i + 1] = segments[i];
+              segments[i] = temporarySwitch;
+              j = 0;
+            }
+          }
+        }
         for (var i = 0; i < segments.length; i++) {
           for (var j = 0; j < holes.length; j++) {
             if (double.parse(segments[i].length) <=
@@ -1189,6 +1213,48 @@ class AllocationState extends State<Allocation> {
                 break;
               }
             }
+          }
+        }
+        for (var i = 0; i < memoryProcesses2.length; i++) {
+          for (var j = 0; j < readyToDraw.length; j++) {
+            if (memoryProcesses2[i].pName == readyToDraw[j].pName &&
+                memoryProcesses2[i].sName == readyToDraw[j].sName) {
+              memoryProcesses2.removeAt(i);
+              i = -1;
+              break;
+            }
+          }
+        }
+        for (var i = 0; i < memoryProcesses2.length; i++) {
+          for (var j = 0; j < readyToDraw.length; j++) {
+            if (readyToDraw[j].pName == memoryProcesses2[i].pName) {
+              MemProcess tempo = MemProcess();
+              tempo.isHole = false;
+              tempo.length = readyToDraw[j].length;
+              tempo.pName = readyToDraw[j].pName;
+              tempo.sName = readyToDraw[j].sName;
+              tempo.start = readyToDraw[j].start;
+              tempo.arrival = readyToDraw[j].arrival;
+              tempo.priority = readyToDraw[j].priority;
+              memoryProcesses2.add(tempo);
+              readyToDraw[j].pName = 'Hole';
+              readyToDraw[j].sName = null;
+              readyToDraw[j].isHole = true;
+            }
+          }
+        }
+        int x = 0;
+        for (var i = 0; i < readyToDraw.length; i++) {
+          if (readyToDraw[i].pName != 'Hole' &&
+              readyToDraw[i].pName != 'Busy') {
+            MemeProc meme = MemeProc();
+            meme.start = readyToDraw[i].start;
+            meme.pName = readyToDraw[i].pName;
+            meme.sName = readyToDraw[i].sName;
+            meme.index = x.toString();
+            meme.length = readyToDraw[i].length;
+            x++;
+            segmentTable.add(meme);
           }
         }
         for (var i = 0; i < holes.length; i++) {
@@ -1282,29 +1348,6 @@ class AllocationState extends State<Allocation> {
                   ('${operation.pName}: ${operation.sName}'),
             ));
           }
-        }
-      }
-      for (var i = 0; i < memoryProcesses2.length; i++) {
-        for (var j = 0; j < readyToDraw.length; j++) {
-          if (memoryProcesses2[i].pName == readyToDraw[j].pName &&
-              memoryProcesses2[i].sName == readyToDraw[j].sName) {
-            memoryProcesses2.removeAt(i);
-            i = -1;
-            break;
-          }
-        }
-      }
-      int x = 0;
-      for (var i = 0; i < readyToDraw.length; i++) {
-        if (readyToDraw[i].pName != 'Hole' && readyToDraw[i].pName != 'Busy') {
-          MemeProc meme = MemeProc();
-          meme.start = readyToDraw[i].start;
-          meme.pName = readyToDraw[i].pName;
-          meme.sName = readyToDraw[i].sName;
-          meme.index = x.toString();
-          meme.length = readyToDraw[i].length;
-          x++;
-          segmentTable.add(meme);
         }
       }
     }
