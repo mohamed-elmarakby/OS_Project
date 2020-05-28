@@ -768,10 +768,13 @@ class _MemoryAllocatorState extends State<MemoryAllocator> {
 
 class MemProcess extends StatelessWidget {
   String pName, sName, start, length, arrival, priority;
-  bool isHole;
+  int numberOfHole;
+  bool isHole, fits;
   final Color coloring;
   MemProcess(
       {this.isHole,
+      this.numberOfHole,
+      this.fits,
       this.pName,
       this.sName,
       this.arrival,
@@ -836,8 +839,11 @@ class MemeProc extends StatelessWidget {
 }
 
 List<MemProcess> holes = [],
+    imjHoles = [],
+    fakeHoles = [],
     segments = [],
     memoryProcesses1 = [],
+    waitingTable = [],
     memoryProcesses2 = [];
 List<MemeProc> segmentTable = [];
 List<MemProcess> readyToDraw = [];
@@ -947,6 +953,7 @@ class AllocationState extends State<Allocation> {
       tempH.length = memoryHoles[i].length;
       tempH.start = memoryHoles[i].start;
       holes.add(tempH);
+      imjHoles.add(tempH);
     }
     for (var i = 0; i < memoryProcesses.length; i++) {
       MemProcess tempS = MemProcess();
@@ -963,65 +970,101 @@ class AllocationState extends State<Allocation> {
       {
         holes.sort(
             (a, b) => (double.parse(a.start)).compareTo(double.parse(b.start)));
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        int locator = 0;
         for (var i = 0; i < segments.length; i++) {
-          for (var j = 0; j < holes.length; j++) {
-            if (double.parse(segments[i].length) <=
-                double.parse(holes[j].length)) {
-              MemProcess tempHole = MemProcess();
-              MemProcess tempSegmnet = MemProcess();
-              tempHole = holes[j];
-              tempSegmnet = segments[i];
-              tempSegmnet.start = (double.parse(tempHole.start)).toString();
-              tempHole.length = (double.parse(tempHole.length) -
-                      double.parse(tempSegmnet.length))
-                  .toString();
-              tempHole.start = (double.parse(tempSegmnet.start) +
-                      double.parse(tempSegmnet.length))
-                  .toString();
-              if (double.parse(tempHole.length) != 0) {
-                readyToDraw.add(tempSegmnet);
-                segments.removeAt(i);
-                memoryProcesses1.removeAt(i);
-                i = -1;
-                holes[j] = tempHole;
-                break;
-              } else {
-                readyToDraw.add(tempSegmnet);
-                segments.removeAt(i);
-                memoryProcesses1.removeAt(i);
-                i = -1;
-                holes.removeAt(j);
-                break;
-              }
-            }
-          }
-        }
-        for (var i = 0; i < memoryProcesses2.length; i++) {
-          for (var j = 0; j < readyToDraw.length; j++) {
-            if (memoryProcesses2[i].pName == readyToDraw[j].pName &&
-                memoryProcesses2[i].sName == readyToDraw[j].sName) {
-              memoryProcesses2.removeAt(i);
-              i = -1;
+          List<MemProcess> checkingProcess = [];
+          List<MemProcess> fits = [];
+          for (var k = locator; k <= segments.length - 1; k++) {
+            if (k == segments.length - 1) {
+              checkingProcess.add(segments[k]);
+              locator = segments.length;
+              i = segments.length;
+              break;
+            } else if (segments[k].pName == segments[k + 1].pName) {
+              checkingProcess.add(segments[k]);
+              locator = k + 1;
+            } else {
+              checkingProcess.add(segments[k]);
+              locator = k + 1;
               break;
             }
           }
-        }
-        for (var i = 0; i < memoryProcesses2.length; i++) {
-          for (var j = 0; j < readyToDraw.length; j++) {
-            if (readyToDraw[j].pName == memoryProcesses2[i].pName) {
-              MemProcess tempo = MemProcess();
-              tempo.isHole = false;
-              tempo.length = readyToDraw[j].length;
-              tempo.pName = readyToDraw[j].pName;
-              tempo.sName = readyToDraw[j].sName;
-              tempo.start = readyToDraw[j].start;
-              tempo.arrival = readyToDraw[j].arrival;
-              tempo.priority = readyToDraw[j].priority;
-              memoryProcesses2.add(tempo);
-              readyToDraw[j].pName = 'Hole';
-              readyToDraw[j].sName = null;
-              readyToDraw[j].isHole = true;
+          for (var i = 0; i < imjHoles.length; i++) {
+            MemProcess tempo = MemProcess();
+            tempo.sName = imjHoles[i].sName;
+            tempo.pName = imjHoles[i].pName;
+            tempo.isHole = imjHoles[i].isHole;
+            tempo.length = imjHoles[i].length;
+            tempo.start = imjHoles[i].start;
+            fakeHoles.add(tempo);
+          }
+          for (var i = 0; i < checkingProcess.length; i++) {
+            for (var j = 0; j < imjHoles.length; j++) {
+              if (double.parse(checkingProcess[i].length) <=
+                  double.parse(fakeHoles[j].length)) {
+                String xo = (double.parse(fakeHoles[j].length) -
+                        double.parse(checkingProcess[i].length))
+                    .toString();
+                String so = (double.parse(fakeHoles[j].start) +
+                        double.parse(checkingProcess[i].length))
+                    .toString();
+                fakeHoles[j].length = xo;
+                fakeHoles[j].start = so;
+                checkingProcess[i].fits = true;
+                checkingProcess[i].numberOfHole = j;
+                break;
+              } else {
+                checkingProcess[i].fits = false;
+              }
             }
+          }
+          fakeHoles.clear();
+          bool foundNoFit = false;
+          for (var i = 0; i < checkingProcess.length; i++) {
+            if (checkingProcess[i].fits == false) {
+              foundNoFit = true;
+              break;
+            }
+          }
+          if (foundNoFit == true) {
+            for (var q = 0; q < checkingProcess.length; q++) {
+              MemProcess waiting = MemProcess();
+              waiting.arrival = checkingProcess[q].arrival;
+              waiting.fits = checkingProcess[q].fits;
+              waiting.pName = checkingProcess[q].pName;
+              waiting.sName = checkingProcess[q].sName;
+              waiting.length = checkingProcess[q].length;
+              waiting.start = checkingProcess[q].start;
+              waiting.isHole = false;
+              waitingTable.add(waiting);
+            }
+          }
+          if (foundNoFit == false) {
+            for (var a = 0; a < checkingProcess.length; a++) {
+              int hole = checkingProcess[a].numberOfHole;
+              String start, newStart;
+              start = imjHoles[hole].start;
+              checkingProcess[a].start = start;
+              newStart = (double.parse(start) +
+                      double.parse(checkingProcess[a].length))
+                  .toString();
+              imjHoles[hole].start = newStart;
+              imjHoles[hole].length = (int.parse(imjHoles[hole].length) -
+                      int.parse(checkingProcess[a].length))
+                  .toString();
+              MemProcess fit = MemProcess();
+              fit.arrival = checkingProcess[a].arrival;
+              fit.fits = checkingProcess[a].fits;
+              fit.pName = checkingProcess[a].pName;
+              fit.sName = checkingProcess[a].sName;
+              fit.length = checkingProcess[a].length;
+              fit.start = checkingProcess[a].start;
+              fits.add(fit);
+            }
+          }
+          for (var a = 0; a < fits.length; a++) {
+            readyToDraw.add(fits[a]);
           }
         }
         int x = 0;
@@ -1038,10 +1081,12 @@ class AllocationState extends State<Allocation> {
             segmentTable.add(meme);
           }
         }
-        for (var i = 0; i < holes.length; i++) {
+        for (var i = 0; i < imjHoles.length; i++) {
           MemProcess temp = MemProcess();
-          temp = holes[i];
-          readyToDraw.add(temp);
+          temp = imjHoles[i];
+          if (double.parse(temp.length) != 0) {
+            readyToDraw.add(temp);
+          }
         }
         readyToDraw.sort(
             (a, b) => (double.parse(a.start)).compareTo(double.parse(b.start)));
@@ -1088,6 +1133,7 @@ class AllocationState extends State<Allocation> {
                   .toString()));
         }
         for (var i = 0; i < readyToDraw.length; i++) {
+          //here is the final drawing of the memory list
           memoryList.add([readyToDraw[i]]);
         }
         if (!direction) {
@@ -1175,6 +1221,8 @@ class AllocationState extends State<Allocation> {
       {
         holes.sort((a, b) =>
             (double.parse(a.length)).compareTo(double.parse(b.length)));
+        imjHoles.sort((a, b) =>
+            (double.parse(a.length)).compareTo(double.parse(b.length)));
         for (var j = 0; j < segments.length; j++) {
           for (var i = 0; i < segments.length - 1; i++) {
             if (segments[i].pName == segments[i + 1].pName &&
@@ -1192,65 +1240,101 @@ class AllocationState extends State<Allocation> {
             }
           }
         }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        int locator = 0;
         for (var i = 0; i < segments.length; i++) {
-          for (var j = 0; j < holes.length; j++) {
-            if (double.parse(segments[i].length) <=
-                double.parse(holes[j].length)) {
-              MemProcess tempHole = MemProcess();
-              MemProcess tempSegmnet = MemProcess();
-              tempHole = holes[j];
-              tempSegmnet = segments[i];
-              tempSegmnet.start = (double.parse(tempHole.start)).toString();
-              tempHole.length = (double.parse(tempHole.length) -
-                      double.parse(tempSegmnet.length))
-                  .toString();
-              tempHole.start = (double.parse(tempSegmnet.start) +
-                      double.parse(tempSegmnet.length))
-                  .toString();
-              if (double.parse(tempHole.length) != 0) {
-                readyToDraw.add(tempSegmnet);
-                segments.removeAt(i);
-                memoryProcesses1.removeAt(i);
-                i = -1;
-                holes[j] = tempHole;
-                break;
-              } else {
-                readyToDraw.add(tempSegmnet);
-                segments.removeAt(i);
-                memoryProcesses1.removeAt(i);
-                i = -1;
-                holes.removeAt(j);
-                break;
-              }
-            }
-          }
-        }
-        for (var i = 0; i < memoryProcesses2.length; i++) {
-          for (var j = 0; j < readyToDraw.length; j++) {
-            if (memoryProcesses2[i].pName == readyToDraw[j].pName &&
-                memoryProcesses2[i].sName == readyToDraw[j].sName) {
-              memoryProcesses2.removeAt(i);
-              i = -1;
+          List<MemProcess> checkingProcess = [];
+          List<MemProcess> fits = [];
+          for (var k = locator; k <= segments.length - 1; k++) {
+            if (k == segments.length - 1) {
+              checkingProcess.add(segments[k]);
+              locator = segments.length;
+              i = segments.length;
+              break;
+            } else if (segments[k].pName == segments[k + 1].pName) {
+              checkingProcess.add(segments[k]);
+              locator = k + 1;
+            } else {
+              checkingProcess.add(segments[k]);
+              locator = k + 1;
               break;
             }
           }
-        }
-        for (var i = 0; i < memoryProcesses2.length; i++) {
-          for (var j = 0; j < readyToDraw.length; j++) {
-            if (readyToDraw[j].pName == memoryProcesses2[i].pName) {
-              MemProcess tempo = MemProcess();
-              tempo.isHole = false;
-              tempo.length = readyToDraw[j].length;
-              tempo.pName = readyToDraw[j].pName;
-              tempo.sName = readyToDraw[j].sName;
-              tempo.start = readyToDraw[j].start;
-              tempo.arrival = readyToDraw[j].arrival;
-              tempo.priority = readyToDraw[j].priority;
-              memoryProcesses2.add(tempo);
-              readyToDraw[j].pName = 'Hole';
-              readyToDraw[j].sName = null;
-              readyToDraw[j].isHole = true;
+          for (var i = 0; i < imjHoles.length; i++) {
+            MemProcess tempo = MemProcess();
+            tempo.sName = imjHoles[i].sName;
+            tempo.pName = imjHoles[i].pName;
+            tempo.isHole = imjHoles[i].isHole;
+            tempo.length = imjHoles[i].length;
+            tempo.start = imjHoles[i].start;
+            fakeHoles.add(tempo);
+          }
+          for (var i = 0; i < checkingProcess.length; i++) {
+            for (var j = 0; j < imjHoles.length; j++) {
+              if (double.parse(checkingProcess[i].length) <=
+                  double.parse(fakeHoles[j].length)) {
+                String xo = (double.parse(fakeHoles[j].length) -
+                        double.parse(checkingProcess[i].length))
+                    .toString();
+                String so = (double.parse(fakeHoles[j].start) +
+                        double.parse(checkingProcess[i].length))
+                    .toString();
+                fakeHoles[j].length = xo;
+                fakeHoles[j].start = so;
+                checkingProcess[i].fits = true;
+                checkingProcess[i].numberOfHole = j;
+                break;
+              } else {
+                checkingProcess[i].fits = false;
+              }
             }
+          }
+          fakeHoles.clear();
+          bool foundNoFit = false;
+          for (var i = 0; i < checkingProcess.length; i++) {
+            if (checkingProcess[i].fits == false) {
+              foundNoFit = true;
+              break;
+            }
+          }
+          if (foundNoFit == true) {
+            for (var q = 0; q < checkingProcess.length; q++) {
+              MemProcess waiting = MemProcess();
+              waiting.arrival = checkingProcess[q].arrival;
+              waiting.fits = checkingProcess[q].fits;
+              waiting.pName = checkingProcess[q].pName;
+              waiting.sName = checkingProcess[q].sName;
+              waiting.length = checkingProcess[q].length;
+              waiting.start = checkingProcess[q].start;
+              waiting.isHole = false;
+              waitingTable.add(waiting);
+            }
+          }
+          if (foundNoFit == false) {
+            for (var a = 0; a < checkingProcess.length; a++) {
+              int hole = checkingProcess[a].numberOfHole;
+              String start, newStart;
+              start = imjHoles[hole].start;
+              checkingProcess[a].start = start;
+              newStart = (double.parse(start) +
+                      double.parse(checkingProcess[a].length))
+                  .toString();
+              imjHoles[hole].start = newStart;
+              imjHoles[hole].length = (int.parse(imjHoles[hole].length) -
+                      int.parse(checkingProcess[a].length))
+                  .toString();
+              MemProcess fit = MemProcess();
+              fit.arrival = checkingProcess[a].arrival;
+              fit.fits = checkingProcess[a].fits;
+              fit.pName = checkingProcess[a].pName;
+              fit.sName = checkingProcess[a].sName;
+              fit.length = checkingProcess[a].length;
+              fit.start = checkingProcess[a].start;
+              fits.add(fit);
+            }
+          }
+          for (var a = 0; a < fits.length; a++) {
+            readyToDraw.add(fits[a]);
           }
         }
         int x = 0;
@@ -1267,10 +1351,12 @@ class AllocationState extends State<Allocation> {
             segmentTable.add(meme);
           }
         }
-        for (var i = 0; i < holes.length; i++) {
+        for (var i = 0; i < imjHoles.length; i++) {
           MemProcess temp = MemProcess();
-          temp = holes[i];
-          readyToDraw.add(temp);
+          temp = imjHoles[i];
+          if (double.parse(temp.length) != 0) {
+            readyToDraw.add(temp);
+          }
         }
         readyToDraw.sort(
             (a, b) => (double.parse(a.start)).compareTo(double.parse(b.start)));
@@ -1393,11 +1479,15 @@ class AllocationState extends State<Allocation> {
                   seriesList.clear();
                   memElements.clear();
                   memoryList.clear();
+                  imjHoles.clear();
+
                   memoryProcesses1.clear();
                   memoryProcesses2.clear();
                   holes.clear();
                   segments.clear();
+                  waitingTable.clear();
                   segmentTable.clear();
+                  fakeHoles.clear();
                   readyToDraw.clear();
                   drawingFunction();
                 });
@@ -1409,10 +1499,13 @@ class AllocationState extends State<Allocation> {
               onPressed: () {
                 seriesList.clear();
                 memElements.clear();
+                imjHoles.clear();
                 memoryList.clear();
                 memoryProcesses1.clear();
+                waitingTable.clear();
                 memoryProcesses2.clear();
                 holes.clear();
+                fakeHoles.clear();
                 segments.clear();
                 segmentTable.clear();
                 readyToDraw.clear();
@@ -1601,10 +1694,10 @@ class AllocationState extends State<Allocation> {
                                       ListView.builder(
                                           shrinkWrap: true,
                                           physics: ScrollPhysics(),
-                                          itemCount: memoryProcesses2.length,
+                                          itemCount: waitingTable.length,
                                           itemBuilder:
                                               (BuildContext ctxt, int index) {
-                                            return memoryProcesses2[index];
+                                            return waitingTable[index];
                                           })
                                     ],
                                   ),
