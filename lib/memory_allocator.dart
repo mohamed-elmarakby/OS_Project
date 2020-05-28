@@ -1009,8 +1009,18 @@ class AllocationState extends State<Allocation> {
         for (var i = 0; i < memoryProcesses2.length; i++) {
           for (var j = 0; j < readyToDraw.length; j++) {
             if (readyToDraw[j].pName == memoryProcesses2[i].pName) {
-              memoryProcesses2.add(readyToDraw[j]);
-              readyToDraw.removeAt(j);
+              MemProcess tempo = MemProcess();
+              tempo.isHole = false;
+              tempo.length = readyToDraw[j].length;
+              tempo.pName = readyToDraw[j].pName;
+              tempo.sName = readyToDraw[j].sName;
+              tempo.start = readyToDraw[j].start;
+              tempo.arrival = readyToDraw[j].arrival;
+              tempo.priority = readyToDraw[j].priority;
+              memoryProcesses2.add(tempo);
+              readyToDraw[j].pName = 'Hole';
+              readyToDraw[j].sName = null;
+              readyToDraw[j].isHole = true;
             }
           }
         }
